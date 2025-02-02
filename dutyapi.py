@@ -35,9 +35,11 @@ class Data(BaseModel):
     e_num : int
     month : int = None
     vac : dict = None
+    
 @app.get('/')
-async def get(data:Data):
-    return 'meowowooww'
+async def ge():
+    return {"get it":"haha"}
+    
 @app.post('/d')
 async def get(data:Data):
     global names_list,vacations

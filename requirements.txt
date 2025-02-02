@@ -1,0 +1,11 @@
+fastapi~=0.115.6
+starlette.responses
+random
+os
+pandas~=2.0.1
+datetime
+flask~=3.1.0
+openpyxl~=3.1.5
+starlette~=0.41.3
+python-dateutil~=2.8.2
+pydantic~=2.10.5

@@ -430,8 +430,7 @@ async def get(data:Data):
     e.WK()
 
     e.print()'''
-    os.remove('Schedule.xlsx')
-    os.remove('February Schedule.xlsx')
+    
     print('meow')
     names_list = list(range(1, data.e_num + 1))
     vacations = {key: [] for key in names_list}

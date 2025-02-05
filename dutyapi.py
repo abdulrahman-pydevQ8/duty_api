@@ -14,7 +14,7 @@ import copy
 from docx import Document
 from docx.shared import Pt
 from docx.enum.section import WD_ORIENT
-from openpyxl.styles import PatternFill
+from openpyxl.styles import PatternFill, Alignment
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,23 +30,26 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],)  # Allow all headers
+    allow_headers=["*"], )  # Allow all headers
+
+
 class Data(BaseModel):
-    e_num : int
-    month : int = None
-    vac : dict = None
-    
+    e_num: int
+    holi: list = None
+    vac: dict = None
+
+
 @app.get('/')
 async def ge():
-    return {"get it":"haha"}
-    
+    return {"get it": "haha"}
+
+
 @app.post('/d')
-async def get(data:Data):
-    global names_list,vacations
+async def get(data: Data):
+    global names_list, vacations, month_name, week_end
 
     class Tframe:
         def __init__(self, datee):
-            global week_end
             self.date = datee
             global week_end, month_name
             week_end = []
@@ -322,63 +325,22 @@ async def get(data:Data):
             ws.insert_rows(1)
             for col_num, value in enumerate(main_keys_days, start=1):  # start=1 to start from column A
                 ws.cell(row=1, column=col_num, value=value[0])
-            # ws.column_dimensions['A'].width = lenn +3
             max_ro = ws.max_row
             max_co = ws.max_column
             dark_fill = PatternFill(start_color="909090", end_color="909090", fill_type="solid")
             for w in range(len(week_end)):
                 for r in range(int(max_ro) - 2):
                     ws.cell(row=3 + r, column=1 + int(week_end[w])).fill = dark_fill
-
-            wb.save(f'{month_name} Schedule.xlsx')
-
-            # Create a new Document
-            doc = Document()
-
-            # Set the page size to A3 and orientation to Landscape
-            section = doc.sections[0]
-            section.page_width = Pt(1169)  # A3 width in points (297mm)
-            section.page_height = Pt(827)  # A3 height in points (420mm)
-            section.orientation = WD_ORIENT.LANDSCAPE  # Set to Landscape orientation
-
-            excel_path = f'{month_name} Schedule.xlsx'
-            excel_file = excel_path  # Update with your Excel file path
-            workbook = openpyxl.load_workbook(excel_file)
-            '''sheet = workbook.active
-
-            # Create a new Word document
-            doc = Document()
-
-            # Set the page size to A3 and orientation to Landscape
-            section = doc.sections[0]
-            section.page_width = Pt(1169)  # A3 width in points
-            section.page_height = Pt(827)  # A3 height in points
-            section.orientation = WD_ORIENT.LANDSCAPE  # Set to Landscape orientation
-
-            # Create a table based on Excel data
-            table = doc.add_table(rows=1, cols=sheet.max_column)  # Initial row (header)
-
-            # Add headers (optional step if your Excel has headers)
-            for col in range(sheet.max_column):
-                table.cell(0, col).text = str(sheet.cell(row=1, column=col + 1).value)
-
-            # Populate the table with data from the Excel file
-            for row_idx in range(2, sheet.max_row + 1):  # Start from row 2 (data rows)
-                row = table.add_row()  # Add a new row
-                for col_idx in range(1, sheet.max_column + 1):  # Iterate through columns
-                    cell_value = sheet.cell(row=row_idx, column=col_idx).value
-                    # Check if the cell is None and replace with an empty string if so
-                    row.cells[col_idx - 1].text = '' if cell_value is None else str(cell_value)
+            for row in ws.iter_rows():
+                for cell in row:
+                    if cell.value:  # Only format non-empty cells
+                        cell.alignment = Alignment(horizontal="center")
+            excel_file = 'Schedule.xlsx'
+            wb.save('Schedule.xlsx')
 
 
 
-            # Apply clear borders
-            table.style = 'Table Grid'
 
-            # Save the Word document
-            doc.save(f'{month_name} Schedule.docx')'''
-
-            # Save the document
 
         def count_shifts(self):
             for wq in range(len(self.names)):
@@ -410,52 +372,32 @@ async def get(data:Data):
     main_dic = {}  # each key is a date and contains the names of people who are working on these days
     main_keys = []  # a list of each key easier to handle
     main_keys_days = []  # names of the dates like m for monday
-    # names_list = [] # to be filled with names of the csv file to handle it easier
 
-    '''with open('names.csv', 'r') as na:# fills names in a list
-        names = csv.reader(na)
-        next(names)# skips the first line in the file
-        lenn = 0
-        for lk in names:
-            if len(lk[0]) > lenn:
-                lenn = len(lk[0])
-            names_list.append(lk[0])
-    for g in range(len(names_list)):
-        if len(names_list[g])<lenn:
-            names_list[g] = names_list[g]+(''*(lenn-len(names_list[g])))'''
+
     date = datetime.datetime.now()
 
-    '''T = Tframe(date)  # T will fill the necessary list to be able to distribute emps shifts
-    T.next_month()
-    e = Eframe(main_dic, main_keys, names_list)
 
-    e.N()
-    e.PM()
-    e.WK()
 
-    e.print()'''
-    
-    print('meow')
     names_list = list(range(1, data.e_num + 1))
     vacations = {key: [] for key in names_list}
     tot = len(data.vac.keys())
     k = list(data.vac.keys())
     for h in range(tot):
-        #print(f"this is vac_k[h] {data.vac[k[h]]}")
-        #print(f"this is k[h] {k[h]}")
+        # print(f"this is vac_k[h] {data.vac[k[h]]}")
+        # print(f"this is k[h] {k[h]}")
 
         lis = []
-        #print(data.vac[k[h]][0])
-        for i in range(int(data.vac[k[h]][0]), int(data.vac[k[h]][1])+1):# +1 to include the end number
+        # print(data.vac[k[h]][0])
+        for i in range(int(data.vac[k[h]][0]), int(data.vac[k[h]][1]) + 1):  # +1 to include the end number
             lis.append(str(i))
-        print(lis)
-        print(k[h])
-        vacations[k[h]] = lis
 
+        vacations[k[h]] = lis
 
 
     T = Tframe(date)  # T will fill the necessary list to be able to distribute emps shifts
     T.next_month()
+    week_end.extend(data.holi)
+    print(week_end)
     e = Eframe(main_dic, main_keys, names_list)
 
     e.N()
@@ -463,17 +405,11 @@ async def get(data:Data):
     e.WK()
 
     e.print()
-    print('shit worked')
-    f = e.count_shifts()
     file_path = excel_file
-  # Path to the file
-    return FileResponse(file_path, media_type="application/octet-stream", filename='sentfile.xlsx')
+    # Path to the file
+    return FileResponse(file_path, media_type="application/octet-stream", filename=f'{file_path}')
 
-
-
-
-#remember use uvicorn {thjsfilename}:{fastapi varible} --reload
-#remember use uvicorn apii:app --reload
+# remember use uvicorn {thjsfilename}:{fastapi varible} --reload
+# remember use uvicorn web_api:app --reload
 
 # if i dont have postman use the route /docs automaticly shows me what i need
-

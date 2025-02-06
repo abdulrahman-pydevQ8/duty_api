@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from starlette.responses import FileResponse
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 import random
 import os
 import csv
@@ -38,10 +40,10 @@ class Data(BaseModel):
     holi: list = None
     vac: dict = None
 
-
-@app.get('/')
-async def ge():
-    return {"get it": "haha"}
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    html_path = Path("templates/index.html").read_text()
+    return HTMLResponse(content=html_path)
 
 
 @app.post('/d')

@@ -72,7 +72,7 @@ def get_db_connection():
     conn = sqlite3.connect("users.db")
     conn.row_factory = sqlite3.Row
     return conn
-@app.post('/log')
+@app.post('/log', response_class=HTMLResponse)
 async def commit(acc:createacc):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -87,8 +87,9 @@ async def commit(acc:createacc):
     hashed_password = user["password"]  # Your DB column is "password"
     if not bcrypt.checkpw(acc.password.encode(), hashed_password.encode()):
           raise HTTPException(status_code=401, detail="Invalid credentials")
+    html_path2 = Path("templates/index.html").read_text()
+    return HTMLResponse(content=html_path2)
 
-    return RedirectResponse(url="/", status_code=303)
 
 @app.post('/commitacc')
 async def commit(acc:createacc):

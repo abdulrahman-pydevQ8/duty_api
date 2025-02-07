@@ -87,8 +87,7 @@ async def commit(acc:createacc):
     hashed_password = user["password"]  # Your DB column is "password"
     if not bcrypt.checkpw(acc.password.encode(), hashed_password.encode()):
           raise HTTPException(status_code=401, detail="Invalid credentials")
-    html_path2 = Path("templates/index.html").read_text()
-    return HTMLResponse(content=html_path2)
+    return RedirectResponse(url="/https://duty-api.onrender.com", status_code=303)
 
 
 @app.post('/commitacc')

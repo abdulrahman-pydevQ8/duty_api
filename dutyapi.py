@@ -3,19 +3,15 @@ from starlette.responses import FileResponse
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 import random
-import os
-import csv
+import sqlite3
+import bcrypt
 import pandas as pd
 import datetime
 from datetime import timedelta
 import calendar
 from dateutil.relativedelta import relativedelta
 from openpyxl import load_workbook
-import openpyxl
 import copy
-from docx import Document
-from docx.shared import Pt
-from docx.enum.section import WD_ORIENT
 from openpyxl.styles import PatternFill, Alignment
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,10 +31,48 @@ app.add_middleware(
     allow_headers=["*"], )  # Allow all headers
 
 
+def init_db():
+    with sqlite3.connect("users.db") as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )"""
+        )
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
 class Data(BaseModel):
     e_num: int
     holi: list = None
     vac: dict = None
+class createacc(BaseModel):
+    account : str
+    password: str
+
+@app.get('/new_account', response_class=HTMLResponse)
+async def new():
+    html_path2 = Path("templates/new_acc.html").read_text()
+    return HTMLResponse(content=html_path2)
+app.post('/commitacc')
+async def commit(acc:createacc):
+    init_db()
+
+    hashed_password = hash_password(acc.password)  # Hash password
+
+    try:
+        with sqlite3.connect("users.db") as conn:
+            conn.execute(
+                "INSERT INTO users (account, password) VALUES (?, ?)",
+                (acc.account, hashed_password)
+            )
+        return {"message": "Account created successfully!"}
+    except sqlite3.IntegrityError:
+        return {"error": "Account already exists!"}
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():

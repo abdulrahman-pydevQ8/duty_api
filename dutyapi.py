@@ -58,7 +58,7 @@ class createacc(BaseModel):
 async def new():
     html_path2 = Path("templates/new_acc.html").read_text()
     return HTMLResponse(content=html_path2)
-app.post('/commitacc')
+@app.post('/commitacc')
 async def commit(acc:createacc):
     init_db()
 

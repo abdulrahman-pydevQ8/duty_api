@@ -88,7 +88,7 @@ async def commit(acc:createacc):
     if not bcrypt.checkpw(acc.password.encode(), hashed_password.encode()):
           raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return FileResponse("templates/login.html")
+    return RedirectResponse(url="/", status_code=303)
 
 @app.post('/commitacc')
 async def commit(acc:createacc):

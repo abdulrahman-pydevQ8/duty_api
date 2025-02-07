@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from starlette.responses import FileResponse
 from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, HTTPException, Request, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import random
 import sqlite3
@@ -17,6 +20,8 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 # this class is responsible for the dates in general
+
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 origins = [
@@ -54,10 +59,36 @@ class createacc(BaseModel):
     account : str
     password: str
 
-@app.get('/new_account', response_class=HTMLResponse)
+@app.get('/login', response_class=HTMLResponse)
 async def new():
-    html_path2 = Path("templates/new_acc.html").read_text()
+    html_path2 = Path("templates/login.html").read_text()
     return HTMLResponse(content=html_path2)
+
+
+def verify_password(plain_password, hashed_password):
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
+
+def get_db_connection():
+    conn = sqlite3.connect("users.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+@app.post('/log')
+async def commit(acc:createacc):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE account = ?", (acc.account,))
+    user = cursor.fetchone()
+    conn.close()
+    if user is None:
+         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Compare hashed passwords
+    hashed_password = user["password"]  # Your DB column is "password"
+    if not bcrypt.checkpw(acc.password.encode(), hashed_password.encode()):
+          raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return templates.TemplateResponse("index.html")
 
 @app.post('/commitacc')
 async def commit(acc:createacc):

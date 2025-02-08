@@ -102,7 +102,8 @@ async def commit(acc:createacc):
                 "INSERT INTO users (account, password) VALUES (?, ?)",
                 (acc.account, hashed_password)
             )
-        return {"message": "Account created successfully!"}
+        return RedirectResponse(url="/", status_code=303)
+
     except sqlite3.IntegrityError:
         return {"error": "Account already exists!"}
 

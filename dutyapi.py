@@ -311,8 +311,11 @@ async def get(data: Data):
                             main_keys[int(week_end[i]) - 2]] \
                                 and name not in self.WK_dic[week_end[i]] and \
                                 name not in self.N_dic[main_keys[int(week_end[i]) - 1]]:
-                            self.WK_dic[week_end[i]].append(name)  # Add to AM_dic
-                            selection_counts[name] += 1  # Increment the count for this name
+                            self.WK_dic[week_end[i]].append(name)
+                            if data.am == 1:
+                                selection_counts[name] += 1
+                            else:
+                                pass                               # Increment the count for this name
                             k += 1  # Increment unique count for this key
                             break  # Exit inner loop to move to the next unique position
 
@@ -329,7 +332,7 @@ async def get(data: Data):
                     if WK_names_list[i] in tel:
                         if data.am == 1:
                             empp[i] = "AM"
-                        else:                            
+                        else:
                             empp[i] = ""
 
                 WK[main_keys[WK_e]] = empp

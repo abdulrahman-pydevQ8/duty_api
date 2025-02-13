@@ -55,6 +55,7 @@ class Data(BaseModel):
     e_num: int
     holi: list = None
     vac: dict = None
+    am : int =None
 class createacc(BaseModel):
     account : str
     password: str
@@ -77,7 +78,7 @@ async def commit(acc:createacc):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM users WHERE account = ?", (acc.account,))
+    cursor.execute("SELECT * FROM  users WHERE account = ?", (acc.account,))
     user = cursor.fetchone()
     conn.close()
     if user is None:
@@ -102,7 +103,7 @@ async def commit(acc:createacc):
                 "INSERT INTO users (account, password) VALUES (?, ?)",
                 (acc.account, hashed_password)
             )
-        return RedirectResponse(url="/")
+        return RedirectResponse(url='/')
 
     except sqlite3.IntegrityError:
         return {"error": "Account already exists!"}
@@ -326,7 +327,11 @@ async def get(data: Data):
                     tel = key
 
                     if WK_names_list[i] in tel:
-                        empp[i] = "AM"
+                        if data.am == 1:
+                            empp[i] = "AM"
+                        else:                            
+                            empp[i] = ""
+
                 WK[main_keys[WK_e]] = empp
 
         def print(self):

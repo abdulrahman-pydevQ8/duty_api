@@ -27,16 +27,26 @@
         }
         .form-group {
             margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
         }
         .form-group label {
-            display: block;
             font-weight: bold;
+            margin-bottom: 5px;
         }
         .form-group input, .form-group select {
-            width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .checkbox-group label {
+            font-weight: bold;
         }
         button {
             width: 100%;
@@ -46,22 +56,10 @@
             color: white;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 10px;
         }
         button:hover {
             background: #0056b3;
-        }
-        .vacation-details {
-            margin-top: 20px;
-            padding: 10px;
-            border-top: 1px solid #ddd;
-        }
-        .vacation-details ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .vacation-details ul li {
-            padding: 5px;
-            border-bottom: 1px solid #ddd;
         }
     </style>
 </head>
@@ -91,6 +89,10 @@
                 <label for="vacationEnd">Vacation End Day:</label>
                 <input type="number" id="vacationEnd">
             </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="amCheckbox">
+                <label for="amCheckbox">AM Schedule</label>
+            </div>
             <button type="button" id="addVacation">Add Vacation</button>
             <button type="submit">Submit</button>
         </form>
@@ -105,6 +107,7 @@
         const employeeSelect = document.getElementById('employeeSelect');
         const vacationStartInput = document.getElementById('vacationStart');
         const vacationEndInput = document.getElementById('vacationEnd');
+        const amCheckbox = document.getElementById('amCheckbox');
         const addVacationButton = document.getElementById('addVacation');
         const vacationList = document.getElementById('vacationList');
         let vacationData = {};
@@ -123,23 +126,26 @@
             const selectedEmployee = employeeSelect.value;
             const startDay = vacationStartInput.value;
             const endDay = vacationEndInput.value;
+            const amValue = amCheckbox.checked ? 1 : 0;
 
             if (!selectedEmployee || !startDay || !endDay) {
                 alert('Please fill all fields!');
                 return;
             }
 
-            vacationData[selectedEmployee] = [startDay, endDay];
+            vacationData[selectedEmployee] = [startDay, endDay, amValue];
             displayVacationData();
             vacationStartInput.value = '';
             vacationEndInput.value = '';
+            amCheckbox.checked = false;
         });
 
         function displayVacationData() {
             vacationList.innerHTML = '';
             Object.keys(vacationData).forEach(emp => {
                 const li = document.createElement('li');
-                li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}`;
+                const amText = vacationData[emp][2] === 1 ? 'AM: Yes' : 'AM: No';
+                li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}, ${amText}`;
                 vacationList.appendChild(li);
             });
         }
@@ -162,7 +168,8 @@
             const requestBody = {
                 e_num: parseInt(numEmployees),
                 holi: holidays,
-                vac: formattedVacations
+                vac: formattedVacations,
+                am: Object.values(vacationData).some(v => v[2] === 1) ? 1 : 0
             };
 
             fetch('https://duty-api.onrender.com/d', {

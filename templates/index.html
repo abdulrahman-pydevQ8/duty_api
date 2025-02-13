@@ -1,194 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Vacation Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-        .form-container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            margin: 20px auto;
-            box-sizing: border-box;
-            overflow-y: auto;
-            max-height: 90vh;
-        }
-        .form-group {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        .form-group label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .form-group input, .form-group select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .checkbox-group label {
-            font-weight: bold;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background: #007BFF;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Vacation Form</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          background-color: #f4f4f9;
+      }
+      .form-container {
+          background: #fff;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+          width: 400px;
+          margin: 20px auto;
+          box-sizing: border-box;
+          overflow-y: auto;
+          max-height: 90vh;
+      }
+      .form-group {
+          margin-bottom: 15px;
+          display: flex;
+          flex-direction: column;
+      }
+      .form-group label {
+          font-weight: bold;
+          margin-bottom: 5px;
+      }
+      .form-group input, .form-group select {
+          padding: 8px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+      }
+      .checkbox-group {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 15px;
+      }
+      .checkbox-group label {
+          font-weight: bold;
+      }
+      button {
+          width: 100%;
+          padding: 10px;
+          border: none;
+          background: #007BFF;
+          color: white;
+          border-radius: 5px;
+          cursor: pointer;
+          margin-top: 10px;
+      }
+      button:hover {
+          background: #0056b3;
+      }
+  </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>Employee Vacation Form</h2>
-        <form id="vacationForm">
-            <div class="form-group">
-                <label for="numEmployees">Number of Employees:</label>
-                <input type="number" id="numEmployees" min="1">
-            </div>
-            <div class="form-group">
-                <label for="holidays">Holidays (comma-separated days):</label>
-                <input type="text" id="holidays" placeholder="E.g., 2,3,15">
-            </div>
-            <div class="form-group">
-                <label for="employeeSelect">Select Employee:</label>
-                <select id="employeeSelect">
-                    <option value="">Select an employee</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="vacationStart">Vacation Start Day:</label>
-                <input type="number" id="vacationStart">
-            </div>
-            <div class="form-group">
-                <label for="vacationEnd">Vacation End Day:</label>
-                <input type="number" id="vacationEnd">
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="amCheckbox">
-                <label for="amCheckbox">AM Schedule</label>
-            </div>
-            <button type="button" id="addVacation">Add Vacation</button>
-            <button type="submit">Submit</button>
-        </form>
-        <div class="vacation-details">
-            <h3>Vacation Details</h3>
-            <ul id="vacationList"></ul>
-        </div>
-    </div>
-    <script>
-        const numEmployeesInput = document.getElementById('numEmployees');
-        const holidaysInput = document.getElementById('holidays');
-        const employeeSelect = document.getElementById('employeeSelect');
-        const vacationStartInput = document.getElementById('vacationStart');
-        const vacationEndInput = document.getElementById('vacationEnd');
-        const amCheckbox = document.getElementById('amCheckbox');
-        const addVacationButton = document.getElementById('addVacation');
-        const vacationList = document.getElementById('vacationList');
-        let vacationData = {};
+  <div class="form-container">
+      <h2>Employee Vacation Form</h2>
+      <form id="vacationForm">
+          <div class="form-group">
+              <label for="numEmployees">Number of Employees:</label>
+              <input type="number" id="numEmployees" min="1">
+          </div>
+          <div class="form-group">
+              <label for="holidays">Holidays (comma-separated days):</label>
+              <input type="text" id="holidays" placeholder="E.g., 2,3,15">
+          </div>
+          <div class="form-group">
+              <label for="employeeSelect">Select Employee:</label>
+              <select id="employeeSelect">
+                  <option value="">Select an employee</option>
+              </select>
+          </div>
+          <div class="form-group">
+              <label for="vacationStart">Vacation Start Day:</label>
+              <input type="number" id="vacationStart">
+          </div>
+          <div class="form-group">
+              <label for="vacationEnd">Vacation End Day:</label>
+              <input type="number" id="vacationEnd">
+          </div>
+          <div class="checkbox-group">
+              <input type="checkbox" id="amCheckbox">
+              <label for="amCheckbox">AM Schedule</label>
+          </div>
+          <button type="button" id="addVacation">Add Vacation</button>
+          <button type="submit">Submit</button>
+      </form>
+      <div class="vacation-details">
+          <h3>Vacation Details</h3>
+          <ul id="vacationList"></ul>
+      </div>
+  </div>
+  <script>
+      const numEmployeesInput = document.getElementById('numEmployees');
+      const holidaysInput = document.getElementById('holidays');
+      const employeeSelect = document.getElementById('employeeSelect');
+      const vacationStartInput = document.getElementById('vacationStart');
+      const vacationEndInput = document.getElementById('vacationEnd');
+      const amCheckbox = document.getElementById('amCheckbox');
+      const addVacationButton = document.getElementById('addVacation');
+      const vacationList = document.getElementById('vacationList');
+      let vacationData = {};
 
-        numEmployeesInput.addEventListener('change', () => {
-            employeeSelect.innerHTML = '<option value="">Select an employee</option>';
-            for (let i = 1; i <= numEmployeesInput.value; i++) {
-                let option = document.createElement('option');
-                option.value = i.toString();
-                option.textContent = `Employee ${i}`;
-                employeeSelect.appendChild(option);
-            }
-        });
+      // Populate employee select options when number of employees is entered
+      numEmployeesInput.addEventListener('change', () => {
+          employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+          for (let i = 1; i <= numEmployeesInput.value; i++) {
+              let option = document.createElement('option');
+              option.value = i.toString();
+              option.textContent = `Employee ${i}`;
+              employeeSelect.appendChild(option);
+          }
+      });
 
-        addVacationButton.addEventListener('click', () => {
-            const selectedEmployee = employeeSelect.value;
-            const startDay = vacationStartInput.value;
-            const endDay = vacationEndInput.value;
-            const amValue = amCheckbox.checked ? 1 : 0;
+      // Add vacation data for selected employee
+      addVacationButton.addEventListener('click', () => {
+          const selectedEmployee = employeeSelect.value;
+          const startDay = vacationStartInput.value;
+          const endDay = vacationEndInput.value;
+          const amValue = amCheckbox.checked ? 1 : 0;
 
-            if (!selectedEmployee || !startDay || !endDay) {
-                alert('Please fill all fields!');
-                return;
-            }
+          if (!selectedEmployee || !startDay || !endDay) {
+              alert('Please fill all fields!');
+              return;
+          }
 
-            vacationData[selectedEmployee] = [startDay, endDay, amValue];
-            displayVacationData();
-            vacationStartInput.value = '';
-            vacationEndInput.value = '';
-            amCheckbox.checked = false;
-        });
+          // Store vacation data (AM value is stored but not displayed)
+          vacationData[selectedEmployee] = [startDay, endDay, amValue];
+          displayVacationData();
+          vacationStartInput.value = '';
+          vacationEndInput.value = '';
+          amCheckbox.checked = false;
+      });
 
-        function displayVacationData() {
-            vacationList.innerHTML = '';
-            Object.keys(vacationData).forEach(emp => {
-                const li = document.createElement('li');
-                const amText = vacationData[emp][2] === 1 ? 'AM: Yes' : 'AM: No';
-                li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}, ${amText}`;
-                vacationList.appendChild(li);
-            });
-        }
+      // Display only the start and end days in the vacation list
+      function displayVacationData() {
+          vacationList.innerHTML = '';
+          Object.keys(vacationData).forEach(emp => {
+              const li = document.createElement('li');
+              li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}`;
+              vacationList.appendChild(li);
+          });
+      }
 
-        document.getElementById('vacationForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const numEmployees = numEmployeesInput.value;
-            const holidays = holidaysInput.value.split(',').map(h => h.trim()).filter(h => h !== "");
+      // Submit form and send body request with AM value
+      document.getElementById('vacationForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const numEmployees = numEmployeesInput.value;
+          const holidays = holidaysInput.value.split(',').map(h => h.trim()).filter(h => h !== "");
 
-            if (!numEmployees || holidays.length === 0 || Object.keys(vacationData).length === 0) {
-                alert('Please fill all fields and add vacations!');
-                return;
-            }
+          if (!numEmployees || holidays.length === 0 || Object.keys(vacationData).length === 0) {
+              alert('Please fill all fields and add vacations!');
+              return;
+          }
 
-            let formattedVacations = {};
-            for (const [key, value] of Object.entries(vacationData)) {
-                formattedVacations[key] = value.map(String);
-            }
+          let formattedVacations = {};
+          for (const [key, value] of Object.entries(vacationData)) {
+              formattedVacations[key] = value.map(String);
+          }
 
-            const requestBody = {
-                e_num: parseInt(numEmployees),
-                holi: holidays,
-                vac: formattedVacations,
-                am: Object.values(vacationData).some(v => v[2] === 1) ? 1 : 0
-            };
+          const requestBody = {
+              e_num: parseInt(numEmployees),
+              holi: holidays,
+              vac: formattedVacations,
+              am: amCheckbox.checked ? 1 : 0
+          };
 
-            fetch('https://duty-api.onrender.com/d', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            })
-            .then(response => response.blob())
-            .then(data => {
-                const url = window.URL.createObjectURL(data);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'Schedule.xlsx';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(error => console.error('Error:', error));
-        });
-    </script>
+          fetch('https://duty-api.onrender.com/d', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody)
+          })
+          .then(response => response.blob())
+          .then(data => {
+              const url = window.URL.createObjectURL(data);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'Schedule.xlsx';
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+          })
+          .catch(error => console.error('Error:', error));
+      });
+  </script>
 </body>
 </html>
+

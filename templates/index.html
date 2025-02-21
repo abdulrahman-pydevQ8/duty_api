@@ -88,5 +88,94 @@
           <ul id="vacationList"></ul>
       </div>
   </div>
+  <script>
+      const numEmployeesInput = document.getElementById('numEmployees');
+      const holidaysInput = document.getElementById('holidays');
+      const employeeSelect = document.getElementById('employeeSelect');
+      const vacationStartInput = document.getElementById('vacationStart');
+      const vacationEndInput = document.getElementById('vacationEnd');
+      const addVacationButton = document.getElementById('addVacation');
+      const vacationList = document.getElementById('vacationList');
+      let vacationData = {};
+
+      // Populate employee select options when number of employees is entered
+      numEmployeesInput.addEventListener('change', () => {
+          employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+          for (let i = 1; i <= numEmployeesInput.value; i++) {
+              let option = document.createElement('option');
+              option.value = i.toString();
+              option.textContent = `Employee ${i}`;
+              employeeSelect.appendChild(option);
+          }
+      });
+
+      // Add vacation data for selected employee
+      addVacationButton.addEventListener('click', () => {
+          const selectedEmployee = employeeSelect.value;
+          const startDay = vacationStartInput.value;
+          const endDay = vacationEndInput.value;
+
+          if (!selectedEmployee || !startDay || !endDay) {
+              alert('Please fill all fields!');
+              return;
+          }
+
+          // Store vacation data
+          vacationData[selectedEmployee] = [startDay, endDay];
+          displayVacationData();
+          vacationStartInput.value = '';
+          vacationEndInput.value = '';
+      });
+
+      // Display vacation data
+      function displayVacationData() {
+          vacationList.innerHTML = '';
+          Object.keys(vacationData).forEach(emp => {
+              const li = document.createElement('li');
+              li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}`;
+              vacationList.appendChild(li);
+          });
+      }
+
+      // Submit form
+      document.getElementById('vacationForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const numEmployees = numEmployeesInput.value;
+          const holidays = holidaysInput.value.split(',').map(h => h.trim()).filter(h => h !== "");
+
+          if (!numEmployees || holidays.length === 0 || Object.keys(vacationData).length === 0) {
+              alert('Please fill all fields and add vacations!');
+              return;
+          }
+
+          let formattedVacations = {};
+          for (const [key, value] of Object.entries(vacationData)) {
+              formattedVacations[key] = value.map(String);
+          }
+
+          const requestBody = {
+              e_num: parseInt(numEmployees),
+              holi: holidays,
+              vac: formattedVacations
+          };
+
+          fetch('https://duty-api.onrender.com/d', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody)
+          })
+          .then(response => response.blob())
+          .then(data => {
+              const url = window.URL.createObjectURL(data);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'Schedule.xlsx';
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+          })
+          .catch(error => console.error('Error:', error));
+      });
+  </script>
 </body>
 </html>

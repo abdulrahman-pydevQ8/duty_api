@@ -21,7 +21,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # this class is responsible for the dates in general
 
-templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 origins = [
@@ -36,83 +35,30 @@ app.add_middleware(
     allow_headers=["*"], )  # Allow all headers
 
 
-def init_db():
-    with sqlite3.connect("users.db") as conn:
-        conn.execute(
-            """CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                account TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )"""
-        )
 
-
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 class Data(BaseModel):
     e_num: int
     holi: list = None
     vac: dict = None
-    am : int =None
-class createacc(BaseModel):
-    account : str
-    password: str
 
-@app.get('/login', response_class=HTMLResponse)
-async def new():
-    html_path2 = Path("templates/login.html").read_text()
-    return HTMLResponse(content=html_path2)
+class feed(BaseModel):
+    feedback:str
 
 
-def verify_password(plain_password, hashed_password):
-    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-
-def get_db_connection():
-    conn = sqlite3.connect("users.db")
-    conn.row_factory = sqlite3.Row
-    return conn
-@app.post('/log', response_class=HTMLResponse)
-async def commit(acc:createacc):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM  users WHERE account = ?", (acc.account,))
-    user = cursor.fetchone()
-    conn.close()
-    if user is None:
-         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        # Compare hashed passwords
-    hashed_password = user["password"]  # Your DB column is "password"
-    if not bcrypt.checkpw(acc.password.encode(), hashed_password.encode()):
-          raise HTTPException(status_code=401, detail="Invalid credentials")
-    return RedirectResponse(url="/", status_code=303)
-
-
-@app.post('/commitacc')
-async def commit(acc:createacc):
-    init_db()
-
-    hashed_password = hash_password(acc.password)  # Hash password
-
-    try:
-        with sqlite3.connect("users.db") as conn:
-            conn.execute(
-                "INSERT INTO users (account, password) VALUES (?, ?)",
-                (acc.account, hashed_password)
-            )
-        return RedirectResponse(url='/')
-
-    except sqlite3.IntegrityError:
-        return {"error": "Account already exists!"}
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    html_path = Path("templates/index.html").read_text()
+    html_path = Path("templates/homepage.html").read_text()
     return HTMLResponse(content=html_path)
 
+
+
+@app.get('/d', response_class=HTMLResponse)
+async def dis():
+    html_page = Path("templates/index.html").read_text()
+    return HTMLResponse(content=html_page)
 
 @app.post('/d')
 async def get(data: Data):
@@ -311,11 +257,8 @@ async def get(data: Data):
                             main_keys[int(week_end[i]) - 2]] \
                                 and name not in self.WK_dic[week_end[i]] and \
                                 name not in self.N_dic[main_keys[int(week_end[i]) - 1]]:
-                            self.WK_dic[week_end[i]].append(name)
-                            if data.am == 1:
-                                selection_counts[name] += 1
-                            else:
-                                pass                               # Increment the count for this name
+                            self.WK_dic[week_end[i]].append(name)  # Add to AM_dic
+                            selection_counts[name] += 1  # Increment the count for this name
                             k += 1  # Increment unique count for this key
                             break  # Exit inner loop to move to the next unique position
 
@@ -330,11 +273,7 @@ async def get(data: Data):
                     tel = key
 
                     if WK_names_list[i] in tel:
-                        if data.am == 1:
-                            empp[i] = "AM"
-                        else:
-                            empp[i] = ""
-
+                        empp[i] = "AM"
                 WK[main_keys[WK_e]] = empp
 
         def print(self):

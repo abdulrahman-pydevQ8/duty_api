@@ -68,48 +68,63 @@
   <div class="form-container">
       <button class="back-button" onclick="window.location.href='/';">Back to Homepage</button>
       <h2>Employee Vacation Form</h2>
-      <form id="vacationForm">
-          <div class="form-group">
-              <label for="numEmployees">Number of Employees:</label>
-              <input type="number" id="numEmployees" min="1">
+
+      <form id="stepForm">
+          <div id="step1">
+              <div class="form-group">
+                  <label for="numEmployeesStep">Number of Employees:</label>
+                  <input type="number" id="numEmployeesStep" min="1">
+              </div>
+              <button type="button" onclick="nextStep(1, this)">Next</button>
           </div>
-          <div class="form-group">
-              <label for="holidays">Holidays (comma-separated days):</label>
-              <input type="text" id="holidays" placeholder="E.g., 2,3,15">
+
+          <div id="step2" style="display: none;">
+              <div class="form-group">
+                  <label for="holidaysStep">Holidays (comma-separated days, optional):</label>
+                  <input type="text" id="holidaysStep" placeholder="E.g., 2,3,15">
+              </div>
+              <button type="button" onclick="nextStep(2, this)">Next</button>
           </div>
-          <div class="form-group">
-              <label for="employeeSelect">Select Employee:</label>
-              <select id="employeeSelect">
-                  <option value="">Select an employee</option>
-              </select>
+
+          <div id="step3" style="display: none;">
+              <div class="form-group">
+                  <label for="employeeSelectStep">Select Employee:</label>
+                  <select id="employeeSelectStep">
+                      <option value="">Select an employee</option>
+                  </select>
+              </div>
+              <div class="form-group">
+                  <label for="vacationStartStep">Vacation Start Day (optional):</label>
+                  <input type="number" id="vacationStartStep">
+              </div>
+              <div class="form-group">
+                  <label for="vacationEndStep">Vacation End Day (optional):</label>
+                  <input type="number" id="vacationEndStep">
+              </div>
+              <button type="button" id="addVacationStep">Add Vacation</button>
+              <button type="submit">Submit</button>
+              <div class="vacation-details">
+                  <h3>Vacation Details</h3>
+                  <ul id="vacationList"></ul>
+              </div>
           </div>
-          <div class="form-group">
-              <label for="vacationStart">Vacation Start Day:</label>
-              <input type="number" id="vacationStart">
-          </div>
-          <div class="form-group">
-              <label for="vacationEnd">Vacation End Day:</label>
-              <input type="number" id="vacationEnd">
-          </div>
-          <button type="button" id="addVacation">Add Vacation</button>
-          <button type="submit">Submit</button>
       </form>
-      <div class="vacation-details">
-          <h3>Vacation Details</h3>
-          <ul id="vacationList"></ul>
-      </div>
   </div>
   <script>
-      const numEmployeesInput = document.getElementById('numEmployees');
-      const holidaysInput = document.getElementById('holidays');
-      const employeeSelect = document.getElementById('employeeSelect');
-      const vacationStartInput = document.getElementById('vacationStart');
-      const vacationEndInput = document.getElementById('vacationEnd');
-      const addVacationButton = document.getElementById('addVacation');
+      function nextStep(currentStep, button) {
+        document.getElementById(`step${currentStep + 1}`).style.display = 'block';
+        button.remove();
+      }
+
+      const numEmployeesInput = document.getElementById('numEmployeesStep');
+      const holidaysInput = document.getElementById('holidaysStep');
+      const employeeSelect = document.getElementById('employeeSelectStep');
+      const vacationStartInput = document.getElementById('vacationStartStep');
+      const vacationEndInput = document.getElementById('vacationEndStep');
+      const addVacationButton = document.getElementById('addVacationStep');
       const vacationList = document.getElementById('vacationList');
       let vacationData = {};
 
-      // Populate employee select options when number of employees is entered
       numEmployeesInput.addEventListener('change', () => {
           employeeSelect.innerHTML = '<option value="">Select an employee</option>';
           for (let i = 1; i <= numEmployeesInput.value; i++) {
@@ -120,58 +135,57 @@
           }
       });
 
-      // Add vacation data for selected employee
       addVacationButton.addEventListener('click', () => {
           const selectedEmployee = employeeSelect.value;
           const startDay = vacationStartInput.value;
           const endDay = vacationEndInput.value;
 
-          if (!selectedEmployee || !startDay || !endDay) {
-              alert('Please fill all fields!');
-              return;
+          if (!selectedEmployee) {
+              return; // If no employee is selected, do nothing
           }
 
-          // Store vacation data
-          vacationData[selectedEmployee] = [startDay, endDay];
+          if (!startDay || !endDay) {
+              vacationData[selectedEmployee] = []; // Allow employee without vacation days
+          } else {
+              vacationData[selectedEmployee] = [startDay, endDay];
+          }
+
           displayVacationData();
-          vacationStartInput.value = '';
-          vacationEndInput.value = '';
       });
 
-      // Display vacation data
       function displayVacationData() {
           vacationList.innerHTML = '';
           Object.keys(vacationData).forEach(emp => {
               const li = document.createElement('li');
-              li.textContent = `Employee ${emp}: Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}`;
+              const vacDays = vacationData[emp].length ? `Start - ${vacationData[emp][0]}, End - ${vacationData[emp][1]}` : 'No Vacation';
+              li.textContent = `Employee ${emp}: ${vacDays}`;
               vacationList.appendChild(li);
           });
       }
 
-      // Submit form
-      document.getElementById('vacationForm').addEventListener('submit', (e) => {
+      document.getElementById('stepForm').addEventListener('submit', (e) => {
           e.preventDefault();
           const numEmployees = numEmployeesInput.value;
-          const holidays = holidaysInput.value.split(',').map(h => h.trim()).filter(h => h !== "");
+          const holidays = holidaysInput.value ? holidaysInput.value.split(',').map(h => h.trim()) : [];
 
-          if (!numEmployees || holidays.length === 0 || Object.keys(vacationData).length === 0) {
-              alert('Please fill all fields and add vacations!');
+          if (!numEmployees) {
+              alert('Please enter the number of employees.');
               return;
           }
 
           let formattedVacations = {};
           for (const [key, value] of Object.entries(vacationData)) {
-              formattedVacations[key] = value.map(String);
+              formattedVacations[key] = value.length ? value.map(String) : [];
           }
 
           const requestBody = {
               e_num: parseInt(numEmployees),
-              holi: holidays,
+              holi: holidays.length ? holidays : [],
               vac: formattedVacations
           };
           console.log("Request body:", JSON.stringify(requestBody, null, 2));
 
-          fetch('https://duty-api-1.onrender.com/d', {
+          fetch('/d', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(requestBody)

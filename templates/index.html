@@ -169,6 +169,7 @@
               holi: holidays,
               vac: formattedVacations
           };
+          console.log("Request body:", JSON.stringify(requestBody, null, 2));
 
           fetch('https://duty-api-1.onrender.com/d', {
               method: 'POST',

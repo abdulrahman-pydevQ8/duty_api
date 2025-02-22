@@ -16,7 +16,7 @@ from dateutil.relativedelta import relativedelta
 from openpyxl import load_workbook
 import copy
 from openpyxl.styles import PatternFill, Alignment
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 # this class is responsible for the dates in general
@@ -40,8 +40,8 @@ app.add_middleware(
 
 class Data(BaseModel):
     e_num: int
-    holi: list = None
-    vac: dict = None
+    holi: list = Field(default=[])  # Default holidays
+    vac: dict = Field(default={})  # Default vacation data
 
 class feed(BaseModel):
     feedback:str
@@ -418,7 +418,7 @@ async def get(data: Data):
 
     e.N()
     e.PM()
-    e.WK()
+    e.WK()#
 
     e.print()
     file_path = excel_file

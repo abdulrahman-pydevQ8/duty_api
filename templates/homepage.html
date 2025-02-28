@@ -1,93 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Service</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    html,
-    body {
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
-      background: #f7f7f7;
+    }
+
+    /* Colors and variables */
+    :root {
+      --primary: #4361ee;
+      --secondary: #6c757d;
+      --success: #28a745;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --background: #f5f7fa;
+    }
+
+    /* Base styles */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background: var(--background);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #333;
-      text-align: center;
-      flex-direction: column;
+      padding: 20px;
     }
 
-    .container {
+    /* Container */
+    .app-container {
+      width: 100%;
       max-width: 600px;
-      padding: 2rem;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .app-header h1 {
+      font-size: 1.6rem;
+      margin: 0;
+    }
+
+    /* Content */
+    .content-container {
+      padding: 30px;
     }
 
     ul {
       list-style: disc;
       padding-left: 20px;
-      margin: 0;
-      text-align: left;
+      margin-bottom: 25px;
     }
 
     li {
       margin: 1rem 0;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       line-height: 1.5;
+    }
+
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
     }
 
     .btn {
       display: inline-block;
-      padding: 0.8rem 1.5rem;
-      background: #4CAF50;
-      color: #fff;
+      font-weight: 500;
+      text-align: center;
+      padding: 10px 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+      border-radius: 6px;
+      cursor: pointer;
       text-decoration: none;
-      border-radius: 4px;
-      margin-top: 1.5rem;
-      transition: background 0.3s ease;
+      transition: all 0.15s ease-in-out;
     }
 
-    .btn:hover {
-      background: #45a049;
+    .btn-primary {
+      color: white;
+      background-color: var(--primary);
     }
 
-    /* Feedback button styling */
-    .feedback-btn {
-      display: inline-block;
-      padding: 0.8rem 1.5rem;
-      background: #007BFF;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 4px;
-      margin-top: 1rem;
-      transition: background 0.3s ease;
+    .btn-primary:hover {
+      background-color: #3249c9;
     }
 
-    .feedback-btn:hover {
-      background: #0056b3;
+    .btn-feedback {
+      color: white;
+      background-color: #5a6268;
+    }
+
+    .btn-feedback:hover {
+      background-color: #4a5258;
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <ul>
-      <li>Effortlessly plan your team's vacations in just a few steps.</li>
-      <li>Enter your team details, select your preferred dates, complete a one-time secure payment, and instantly
-        download your custom schedule.</li>
-    </ul>
-    <a href="/d" class="btn">Get Started</a>
-    <br>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfvePh8uim5svsFoKZVQwd-_O6Gh_oY0lnmlhRYOUsa1v3tUg/viewform?usp=header" class="feedback-btn" target="_blank">Give Feedback</a>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>Employee Scheduler</h1>
+    </header>
+
+    <div class="content-container">
+      <ul>
+        <li>Effortlessly plan your team's vacations in just a few steps.</li>
+        <li>Enter your team details, select your preferred dates, complete a one-time secure payment, and instantly
+          download your custom schedule.</li>
+      </ul>
+
+      <div class="btn-container">
+        <a href="/d" class="btn btn-primary">Get Started</a>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfvePh8uim5svsFoKZVQwd-_O6Gh_oY0lnmlhRYOUsa1v3tUg/viewform?usp=header" class="btn btn-feedback" target="_blank">Give Feedback</a>
+      </div>
+    </div>
   </div>
 </body>
-
 </html>

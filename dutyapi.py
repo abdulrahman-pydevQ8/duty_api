@@ -1,13 +1,10 @@
-from fastapi import FastAPI, HTTPException
 from starlette.responses import FileResponse
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi import FastAPI, Form, HTTPException, Request, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import BackgroundTasks
+import os
 from pathlib import Path
 import random
-import sqlite3
-import bcrypt
 import pandas as pd
 import datetime
 from datetime import timedelta
@@ -41,10 +38,10 @@ app.add_middleware(
 class Data(BaseModel):
     e_num: int
     holi: list = Field(default=[])  # Default holidays
+    monthh: int = Field(default=0)
     vac: dict = Field(default={})  # Default vacation data
 
-class feed(BaseModel):
-    feedback:str
+
 
 
 
@@ -61,7 +58,7 @@ async def dis():
     return HTMLResponse(content=html_page)
 
 @app.post('/d')
-async def get(data: Data):
+async def get(data: Data, background_tasks: BackgroundTasks):
     global names_list, vacations, month_name, week_end
 
     class Tframe:
@@ -72,15 +69,19 @@ async def get(data: Data):
             month_name = ''
 
         #  fills the variables with the dates from the next month
-        def next_nmonth(self):  # fills the dates of the next 30 days
+        def next_nmonth(self, m):  # fills the dates of the next 30 days
             global week_end, month_name
             days_of_the_month = calendar.monthrange(self.date.year, self.date.month)[1]
             days_till_end_month = days_of_the_month - self.date.day
             self.date = self.date + timedelta(days=days_till_end_month + 1)
-            self.date = self.date + relativedelta(months=1)
+            self.date = datetime.datetime(self.date.year - 1, 12, 1)
+            self.date = self.date + relativedelta(months=m)
             days_of_the_month = calendar.monthrange(self.date.year, self.date.month)[1]
             month_name = self.date.strftime('%B')
             days_name = []
+            print('this is before the i loop')
+            print(self.date)
+            print(week_end)
 
             for i in range(days_of_the_month):
                 new_d = self.date + timedelta(days=i)
@@ -251,12 +252,13 @@ async def get(data: Data):
                         name = sorted_names[nam]
 
                         # Check for collisions across `AM_dic` and `PM_dic`
+
                         if main_keys[i] in vacations[name]:
                             pass
-                        elif name not in self.PM_dic[week_end[i]] and name not in self.N_dic[
-                            main_keys[int(week_end[i]) - 2]] \
-                                and name not in self.WK_dic[week_end[i]] and \
-                                name not in self.N_dic[main_keys[int(week_end[i]) - 1]]:
+                        elif name not in self.PM_dic[week_end[i]] \
+                        and name not in self.N_dic[main_keys[int(week_end[i]) - 2]] \
+                        and name not in self.WK_dic[week_end[i]] \
+                        and name not in self.N_dic[main_keys[int(week_end[i]) - 1]]:
                             self.WK_dic[week_end[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
                             k += 1  # Increment unique count for this key
@@ -411,19 +413,25 @@ async def get(data: Data):
 
 
     T = Tframe(date)  # T will fill the necessary list to be able to distribute emps shifts
-    T.next_month()
+    if data.monthh == 0:
+        T.next_month()
+    else:
+        T.next_nmonth(data.monthh)
     week_end.extend(data.holi)
     print(week_end)
     e = Eframe(main_dic, main_keys, names_list)
 
     e.N()
     e.PM()
-    e.WK()#
+    e.WK()
 
     e.print()
     file_path = excel_file
     # Path to the file
-    return FileResponse(file_path, media_type="application/octet-stream", filename=f'{file_path}')
+    background_tasks.add_task(os.unlink, file_path)
+    return FileResponse(file_path,
+                        media_type="application/octet-stream",
+                        filename=f'{file_path}')
 
 # remember use uvicorn {thjsfilename}:{fastapi varible} --reload
 # remember use uvicorn web_api:app --reload

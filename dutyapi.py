@@ -60,7 +60,8 @@ async def dis():
 @app.post('/d')
 async def get(data: Data, background_tasks: BackgroundTasks):
     global names_list, vacations, month_name, week_end
-
+    if data.e_num <=20:
+        data.e_num = 30
     class Tframe:
         def __init__(self, datee):
             self.date = datee

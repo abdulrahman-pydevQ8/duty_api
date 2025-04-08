@@ -34,7 +34,7 @@ app.add_middleware(
 
 
 
-@app.get("/labnya", response_class=HTMLResponse)
+@app.get("/labyna", response_class=HTMLResponse)
 async def read_root():
     html_path = Path("templates/hajj.html").read_text(encoding="utf-8")
     return HTMLResponse(content=html_path)

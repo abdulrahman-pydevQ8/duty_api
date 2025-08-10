@@ -4,18 +4,11 @@ from datetime import datetime, timezone
 import os
 database_url = os.environ.get('DATABASE_URL')
 
+
 db_pool = pool.SimpleConnectionPool(
     1, 10,
-    dbname="postgres",
-    user="abdulrahman",
-    password="99628662",
-    host="localhost",
-    port=5432
+    dsn = database_url
 )
-'''db_pool = pool.SimpleConnectionPool(
-    1, 10,
-    database_url
-)'''
 
 def user_id(email):
     conn = db_pool.getconn()

@@ -1,27 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-DBPW6RD54S"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-DBPW6RD54S');
-</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Employee Schedule Generator</title>
+  <title>Syncra-Labs</title>
   <style>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Service</title>
-  <style>
-
     /* Basic reset */
     * {
       box-sizing: border-box;
@@ -38,6 +21,9 @@
       --light: #f8f9fa;
       --dark: #343a40;
       --background: #f5f7fa;
+      --sidebar-width: 250px;
+      --sidebar-collapsed-width: 70px;
+      --transition-speed: 0.3s;
     }
 
     /* Base styles */
@@ -48,9 +34,243 @@
       background: var(--background);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      background-color: var(--dark);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    /* Logo section */
+    .logo {
+      color: white;
+      font-weight: bold;
+      font-size: 1.3rem;
+      text-decoration: none;
+      width: 33%;
+      display: flex;
+      align-items: center;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin-right: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Center navigation section */
+    .nav-center {
+      width: 34%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links li {
+      margin: 0 15px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: #b3b3b3;
+    }
+
+    /* Auth buttons section */
+    .auth-section {
+      width: 33%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .signin-btn {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .signin-btn:hover {
+      background-color: #3249c9;
+    }
+
+    /* Profile section */
+    .profile-section {
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: border-color 0.2s ease;
+    }
+
+    .profile-pic:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .profile-name {
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 60px;
+      height: calc(100vh - 60px);
+      width: var(--sidebar-width);
+      background-color: white;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform var(--transition-speed), width var(--transition-speed);
+      z-index: 900;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .sidebar-content {
+      padding: 20px 0;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+    }
+
+    .sidebar-section-title {
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--secondary);
+      font-weight: bold;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu-item {
+      margin: 5px 0;
+    }
+
+    .sidebar-menu-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: var(--dark);
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar-menu-link:hover {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+    }
+
+    .sidebar-menu-link.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+      border-left: 3px solid var(--primary);
+    }
+
+    .sidebar-icon {
+      margin-right: 15px;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-text {
+      opacity: 1;
+      transition: opacity var(--transition-speed);
+    }
+
+    .collapsed .sidebar-text {
+      opacity: 0;
+      display: none;
+    }
+
+    .sidebar-footer {
+      padding: 15px 20px;
+      border-top: 1px solid #eee;
+      font-size: 0.85rem;
+      color: var(--secondary);
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding-top: 60px;
+      min-height: 100vh;
+      transition: margin-left var(--transition-speed);
+      display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
+    }
+
+    .main-content.expanded {
+      margin-left: var(--sidebar-collapsed-width);
     }
 
     /* Container */
@@ -87,7 +307,7 @@
       margin-bottom: 25px;
     }
 
-    li {
+    .content-container li {
       margin: 1rem 0;
       font-size: 1.1rem;
       line-height: 1.5;
@@ -142,30 +362,243 @@
       font-size: 0.9rem;
       color: #0056b3;
     }
+
+    /* Badge styles */
+    .badge {
+      display: inline-block;
+      padding: 3px 7px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 10px;
+      background-color: var(--primary);
+      color: white;
+      margin-left: 8px;
+    }
+
+    /* Media Query for Mobile */
+    @media screen and (max-width: 768px) {
+      .navbar {
+        height: auto;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .logo, .nav-center, .auth-section {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .logo {
+        text-align: center;
+      }
+
+      .auth-section {
+        justify-content: center;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        top: 130px;
+        height: calc(100vh - 130px);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding-top: 140px;
+      }
+
+      .main-content.expanded {
+        margin-left: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <header class="app-header">
-      <h1>Employee Scheduler</h1>
-    </header>
-
-    <div class="content-container">
-      <div class="notice-box">
-        *Departments with fewer than 20 employees display as 30 for now
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <!-- Logo section (left) -->
+      <div class="logo">
+        <button class="menu-toggle" id="sidebarToggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        Syncra-Labs
       </div>
 
-      <ul>
-        <li>Effortlessly plan your team's vacations in just a few steps.</li>
-        <li>Enter your team details, select your preferred dates, complete a one-time secure payment, and instantly
-          download your custom schedule.</li>
-      </ul>
+      <!-- Navigation links (center) -->
+      <div class="nav-center">
+        <ul class="nav-links">
+          <li><a href="tel:+96555774785">Contact Us</a></li>
+        </ul>
+      </div>
 
-      <div class="btn-container">
-        <a href="/d" class="btn btn-primary">Get Started</a>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfvePh8uim5svsFoKZVQwd-_O6Gh_oY0lnmlhRYOUsa1v3tUg/viewform?usp=header" class="btn btn-feedback" target="_blank">Give Feedback</a>
+      <!-- Auth section (right) -->
+      <div class="auth-section">
+        <!-- Sign In Button (shown when not authenticated) -->
+        <div class="auth-buttons">
+          <a href="/auth" class="auth-btn signin-btn">Sign In</a>
+        </div>
+
+        <!-- Profile Section (shown when authenticated) -->
+        <div class="profile-section">
+          <span class="profile-name"></span>
+          <img class="profile-pic" src="" alt="Profile" />
+        </div>
       </div>
     </div>
-  </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <!-- Workspace section -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Workspace</div>
+        <ul class="sidebar-menu">
+          <li class="sidebar-menu-item">
+            <a href="/files" class="sidebar-menu-link active">
+              <span class="sidebar-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </span>
+              <span class="sidebar-text">Saved Files</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="sidebar-text">Syncra-Labs © 2025</span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <div class="app-container">
+      <header class="app-header">
+        <h1>Employee Scheduler</h1>
+      </header>
+
+      <div class="content-container">
+
+
+        <ul>
+          <li>Effortlessly plan your team's vacations in just a few steps.</li>
+          <li>Enter your team details, select your preferred dates, complete a one-time secure payment, and instantly
+            download your custom schedule.</li>
+        </ul>
+
+        <div class="btn-container">
+          <a href="/d" class="btn btn-primary">Get Started</a>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfvePh8uim5svsFoKZVQwd-_O6Gh_oY0lnmlhRYOUsa1v3tUg/viewform?usp=header" class="btn btn-feedback" target="_blank">Give Feedback</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    //window.addEventListener("load", () => {localStorage.clear();});
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      sidebar.classList.toggle('show');
+      mainContent.classList.toggle('expanded');
+    });
+
+    // Handle sidebar for mobile
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    }
+
+    // JWT parsing function
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Authentication handling
+    function initializeAuth() {
+      // Check for existing token in localStorage
+      const token = localStorage.getItem("token");
+
+      const authButtons = document.querySelector(".auth-buttons");
+      const profileSection = document.querySelector(".profile-section");
+      const profilePic = document.querySelector(".profile-pic");
+      const profileName = document.querySelector(".profile-name");
+
+      if (token) {
+        const payload = parseJwt(token);
+
+        if (payload) {
+          // Hide sign-in button and show profile
+          authButtons.style.display = "none";
+          profileSection.style.display = "flex";
+
+          // Set profile picture and name
+          profilePic.src = payload.picture || "https://via.placeholder.com/32";
+          profileName.textContent = payload.name || payload.email || "User";
+
+          // Add click handler for profile picture (could open a dropdown menu)
+          profilePic.addEventListener('click', () => {
+            // In a real app, this could open a dropdown with logout option
+            const shouldLogout = confirm(`Hello ${payload.name || 'User'}!\n\nWould you like to sign out?`);
+            if (shouldLogout) {
+              // localStorage.removeItem("token");
+              location.reload();
+            }
+          });
+        } else {
+          // Invalid token - show sign-in button
+          authButtons.style.display = "flex";
+          profileSection.style.display = "none";
+        }
+      } else {
+        // No token - show sign-in button
+        authButtons.style.display = "flex";
+        profileSection.style.display = "none";
+      }
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeAuth();
+    });
+
+    // For testing purposes - you can simulate having a token by running this in console:
+    // localStorage.setItem("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInBpY3R1cmUiOiJodHRwczovL3ZpYS5wbGFjZWhvbGRlci5jb20vMzIiLCJpYXQiOjE1MTYyMzkwMjJ9.invalid_signature_for_demo");
+    // Then reload the page to see the profile picture
+  </script>
 </body>
 </html>

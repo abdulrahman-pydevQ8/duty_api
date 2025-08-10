@@ -346,7 +346,7 @@ async def savefile(file_data:Filee, background_tasks: BackgroundTasks):
 
 @app.post('/servefile')
 async def servefile(user_file:servefile):
-    file_path = os.path.join(f'temp/{user_file.user_id}', "schedule.xlsx")
+    file_path = os.path.join(f'/d/temp/{user_file.user_id}', "schedule.xlsx")
     print(user_file.user_id)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")

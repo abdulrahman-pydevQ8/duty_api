@@ -318,7 +318,7 @@ async def files():
 async def showfile(user_iid:servefile):
     files_gen = {
         'name': 'schedule.xlsx',
-        "size": (os.path.getsize(f"temp/{user_iid.user_id}/schedule.xlsx"))
+        "size": (os.path.getsize(f"/d/temp/{user_iid.user_id}/schedule.xlsx"))
     }
 
     return files_gen

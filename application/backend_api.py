@@ -39,7 +39,7 @@ from typing import Optional
 
 load_dotenv()
 # Load manually
-os.environ["REDIRECT_URI"] = "http://127.0.0.1:8000/authted"
+os.environ["REDIRECT_URI"] = "https://duty-api-1.onrender.com/authted"
 
 # Then retrieve it like usual
 redirect_uri = os.getenv("REDIRECT_URI")

@@ -39,4 +39,5 @@ google-auth
 python-dotenv
 psycopg2-binary
 python-jose
+passlib
 uvicorn

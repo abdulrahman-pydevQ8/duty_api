@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-DBPW6RD54S"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-DBPW6RD54S');
-</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Employee Schedule Generator</title>
@@ -216,6 +207,15 @@
       background-color: #5a6268;
     }
 
+    .btn-success {
+      color: white;
+      background-color: var(--success);
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
     .btn-block {
       display: block;
       width: 100%;
@@ -285,6 +285,80 @@
       background-color: #d4edda;
       border: 1px solid #c3e6cb;
     }
+
+    /* Checkbox styles */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .checkbox-container label {
+      display: inline;
+      margin-bottom: 0;
+    }
+
+    /* Slider styles */
+    .slider-container {
+      margin-top: 15px;
+      margin-bottom: 20px;
+    }
+
+    .slider-container label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .slider-wrapper {
+      display: flex;
+      align-items: center;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      margin-right: 10px;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider-value {
+      min-width: 30px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* Action buttons container */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -298,7 +372,7 @@
       <div class="step-indicator">
         <div class="step active" id="step1-indicator">
           <div class="step-number">1</div>
-          <div class="step-label">Employees</div>
+          <div class="step-label">Staff</div>
         </div>
         <div class="step" id="step2-indicator">
           <div class="step-number">2</div>
@@ -320,6 +394,19 @@
             <label for="numEmployeesStep">Number of Employees</label>
             <input type="number" class="form-control" id="numEmployeesStep" min="1" value="35" required>
             <p class="help-text">Enter the total number of employees to be scheduled</p>
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="includeNightShift">
+            <label for="includeNightShift">Include night shift</label>
+          </div>
+
+          <div class="slider-container">
+            <label for="staffPerShiftSlider">Staff per shift</label>
+            <div class="slider-wrapper">
+              <input type="range" min="2" max="6" value="4" class="slider" id="staffPerShiftSlider">
+              <span class="slider-value" id="staffPerShiftValue">4</span>
+            </div>
           </div>
 
           <button type="button" class="btn btn-primary" onclick="nextStep(1, this)">Continue</button>
@@ -386,7 +473,10 @@
 
           <div class="btn-group">
             <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
-            <button type="submit" class="btn btn-primary">Generate Schedule</button>
+            <div class="action-buttons">
+              <button type="button" class="btn btn-success" id="saveButton">Save Schedule</button>
+              <button type="submit" class="btn btn-primary">Download Schedule</button>
+            </div>
           </div>
         </div>
       </form>
@@ -395,254 +485,402 @@
 
   <script>
     // Get current month (1-12)
-    const currentDate = new Date();
-    const currentMonthIndex = currentDate.getMonth() + 1; // getMonth() returns 0-11
+const currentDate = new Date();
+const currentMonthIndex = currentDate.getMonth() + 2; // getMonth() returns 0-11
 
-    // Global variables to track form state
-    let numEmployees = 0;
-    let selectedMonth = currentMonthIndex;
-    let vacations = {};
+// Global variables to track form state
+let numEmployees = 0;
+let selectedMonth = currentMonthIndex;
+let vacations = {};
+let includeNightShift = false;
+let staffPerShift = 4;
 
-    // Get DOM elements
-    const stepForm = document.getElementById('stepForm');
-    const numEmployeesInput = document.getElementById('numEmployeesStep');
-    const monthSelect = document.getElementById('monthStep');
-    const holidaysInput = document.getElementById('holidaysStep');
+// Get DOM elements
+const stepForm = document.getElementById('stepForm');
+const numEmployeesInput = document.getElementById('numEmployeesStep');
+const monthSelect = document.getElementById('monthStep');
+const holidaysInput = document.getElementById('holidaysStep');
+const nightShiftCheckbox = document.getElementById('includeNightShift');
+const staffPerShiftSlider = document.getElementById('staffPerShiftSlider');
+const staffPerShiftValue = document.getElementById('staffPerShiftValue');
+const saveButton = document.getElementById('saveButton');
 
-    // Set the month select to the current month
-    monthSelect.value = currentMonthIndex;
-    const employeeSelect = document.getElementById('employeeSelectStep');
-    const vacationStartInput = document.getElementById('vacationStartStep');
-    const vacationEndInput = document.getElementById('vacationEndStep');
-    const addVacationButton = document.getElementById('addVacationStep');
-    const vacationList = document.getElementById('vacationList');
-    const errorAlert = document.getElementById('errorAlert');
-    const successAlert = document.getElementById('successAlert');
+// Set the month select to the current month
+monthSelect.value = currentMonthIndex;
 
-    // Get step indicators
-    const step1Indicator = document.getElementById('step1-indicator');
-    const step2Indicator = document.getElementById('step2-indicator');
-    const step3Indicator = document.getElementById('step3-indicator');
+// Update slider value display when slider changes
+staffPerShiftSlider.addEventListener('input', function() {
+  staffPerShiftValue.textContent = this.value;
+  staffPerShift = parseInt(this.value);
+});
 
-    // Function to move to next step
-    function nextStep(currentStep, button) {
-      hideAlerts();
+const employeeSelect = document.getElementById('employeeSelectStep');
+const vacationStartInput = document.getElementById('vacationStartStep');
+const vacationEndInput = document.getElementById('vacationEndStep');
+const addVacationButton = document.getElementById('addVacationStep');
+const vacationList = document.getElementById('vacationList');
+const errorAlert = document.getElementById('errorAlert');
+const successAlert = document.getElementById('successAlert');
 
-      // Validate current step before proceeding
-      if (currentStep === 1) {
-        numEmployees = parseInt(numEmployeesInput.value);
-        if (isNaN(numEmployees) || numEmployees < 1) {
-          showError('Please enter a valid number of employees');
-          return;
-        }
+// Get step indicators
+const step1Indicator = document.getElementById('step1-indicator');
+const step2Indicator = document.getElementById('step2-indicator');
+const step3Indicator = document.getElementById('step3-indicator');
 
-        // Populate employee select dropdown
-        populateEmployeeSelect();
+// Fixed Save button click handler
+saveButton.addEventListener('click', function() {
+  try {
+    const userId = getUserIdFromToken();
+    const userEmail = getUserEmailFromToken();
 
-        // Update step indicators
-        step1Indicator.className = 'step completed';
-        step2Indicator.className = 'step active';
-      }
-      else if (currentStep === 2) {
-        // Validate month selection
-        selectedMonth = parseInt(monthSelect.value);
-        if (isNaN(selectedMonth) || selectedMonth < 1 || selectedMonth > 12) {
-          showError('Please select a valid month');
-          return;
-        }
-
-        // Update step indicators
-        step2Indicator.className = 'step completed';
-        step3Indicator.className = 'step active';
-      }
-
-      // Hide current step and show next step
-      document.getElementById(`step${currentStep}`).classList.remove('active');
-      document.getElementById(`step${currentStep + 1}`).classList.add('active');
+    // Validate required fields
+    if (!userId) {
+      showError('User ID not found. Please log in again.');
+      return;
     }
 
-    // Function to go back to previous step
-    function prevStep(currentStep) {
-      hideAlerts();
-
-      // Update step indicators
-      if (currentStep === 2) {
-        step1Indicator.className = 'step active';
-        step2Indicator.className = 'step';
-      }
-      else if (currentStep === 3) {
-        step2Indicator.className = 'step active';
-        step3Indicator.className = 'step';
-      }
-
-      // Hide current step and show previous step
-      document.getElementById(`step${currentStep}`).classList.remove('active');
-      document.getElementById(`step${currentStep - 1}`).classList.add('active');
+    if (!userEmail) {
+      showError('User email not found. Please log in again.');
+      return;
     }
 
-    // Populate employee select dropdown based on number of employees
-    function populateEmployeeSelect() {
-      employeeSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+    const holidaysString = holidaysInput.value.trim();
+    const holidays = holidaysString ? holidaysString.split(',').map(h => h.trim()).filter(h => h) : [];
 
-      for (let i = 1; i <= numEmployees; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = `Employee ${i}`;
-        employeeSelect.appendChild(option);
-      }
+    const stringVacations = {};
+    for (const employeeId in vacations) {
+      stringVacations[employeeId] = vacations[employeeId].map(day => String(day));
     }
 
-    // Add vacation for an employee
-    addVacationButton.addEventListener('click', function() {
-      const employeeId = employeeSelect.value;
-      const startDay = parseInt(vacationStartInput.value);
-      const endDay = parseInt(vacationEndInput.value);
+    const n_shift_value = includeNightShift ? 1 : 2;
 
-      // Validate inputs
-      if (!employeeId) {
-        showError('Please select an employee');
-        return;
+    const scheduleData = {
+      e_num: parseInt(numEmployeesInput.value),
+      n_shift: n_shift_value,
+      e_shift: parseInt(staffPerShiftSlider.value),
+      holi: holidays,
+      monthh: parseInt(monthSelect.value),
+      vac: stringVacations,
+      down: 'up'
+    };
+
+    console.log("Calling /d with scheduleData:", scheduleData);
+
+    // First generate the schedule
+    fetch('/d', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scheduleData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Schedule generation failed: ${response.status} ${response.statusText}`);
       }
+      return response.blob();
+    })
+    .then(blob => {
+      console.log("Schedule generated successfully, now saving...");
 
-      if (isNaN(startDay) || startDay < 1) {
-        showError('Please enter a valid start day');
-        return;
-      }
+      // Now save the file with proper structure
+      const saveData = {
+        user_id: userId,
+        user_email: userEmail,
+        original_filename: 'schedule.xlsx'
+      };
 
-      if (isNaN(endDay) || endDay < 1 || endDay < startDay) {
-        showError('Please enter a valid end day (must be >= start day)');
-        return;
-      }
+      console.log("Calling /savefile with saveData:", saveData);
 
-      // Add vacation to the vacations object
-      vacations[employeeId] = [startDay, endDay];
-
-      // Update vacation list
-      updateVacationList();
-
-      // Clear inputs
-      employeeSelect.value = '';
-      vacationStartInput.value = '';
-      vacationEndInput.value = '';
-
-      showSuccess('Vacation added successfully');
-    });
-
-    // Update the vacation list display
-    function updateVacationList() {
-      // Clear current list
-      vacationList.innerHTML = '';
-
-      // Add each vacation to the list
-      for (const employeeId in vacations) {
-        const dates = vacations[employeeId];
-
-        const li = document.createElement('li');
-        li.className = 'vacation-card';
-
-        const info = document.createElement('div');
-        info.className = 'vacation-info';
-
-        const employeeBadge = document.createElement('div');
-        employeeBadge.className = 'employee-badge';
-        employeeBadge.textContent = `Employee ${employeeId}`;
-
-        const dateInfo = document.createElement('div');
-        dateInfo.textContent = `Days ${dates[0]} - ${dates[1]}`;
-
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete-btn';
-        deleteButton.textContent = 'X';
-        deleteButton.onclick = function() {
-          delete vacations[employeeId];
-          updateVacationList();
-        };
-
-        info.appendChild(employeeBadge);
-        info.appendChild(dateInfo);
-
-        li.appendChild(info);
-        li.appendChild(deleteButton);
-
-        vacationList.appendChild(li);
-      }
-    }
-
-    // Form submission
-    stepForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      try {
-        // Get holidays from input
-        const holidaysString = holidaysInput.value.trim();
-        const holidays = holidaysString ? holidaysString.split(',').map(h => h.trim()).filter(h => h) : [];
-
-        // Convert all values to strings for consistent processing
-        const stringVacations = {};
-        for (const employeeId in vacations) {
-          stringVacations[employeeId] = vacations[employeeId].map(day => String(day));
-        }
-
-        // Prepare data for API
-        const data = {
-          e_num: String(numEmployees),
-          holi: holidays,
-          monthh: String(selectedMonth),
-          vac: stringVacations
-        };
-
-        // Send request to API
-        fetch('/d', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        })
-        .then(response => {
-          if (response.ok) {
-            return response.blob();
-          } else {
-            throw new Error('Failed to generate schedule');
-          }
-        })
-        .then(blob => {
-          // Trigger file download
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'Schedule.xlsx';
-          document.body.appendChild(a);
-          a.click();
-          URL.revokeObjectURL(url);
-
-          showSuccess('Schedule generated successfully!');
-        })
-        .catch(error => {
-          showError(error.message);
+      return fetch('/savefile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saveData)
+      });
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`Save failed: ${response.status} ${response.statusText} - ${text}`);
         });
-      } catch (error) {
-        showError('An error occurred. Please try again.');
       }
+      return response.json();
+    })
+    .then(data => {
+      showSuccess('Schedule generated and saved successfully!');
+      console.log("Save success:", data);
+    })
+    .catch(error => {
+      showError('Error: ' + error.message);
+      console.error("Save error:", error);
     });
 
-    // Helper functions for alerts
-    function showError(message) {
-      errorAlert.textContent = message;
-      errorAlert.style.display = 'block';
-      successAlert.style.display = 'none';
+  } catch (error) {
+    showError('Unexpected error: ' + error.message);
+    console.error("Save function error:", error);
+  }
+});
+
+function getUserIdFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found in localStorage");
+      return null;
     }
 
-    function showSuccess(message) {
-      successAlert.textContent = message;
-      successAlert.style.display = 'block';
-      errorAlert.style.display = 'none';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Try different possible field names for user ID
+    const userId = payload.user_id || payload.sub || payload.id;
+
+    if (!userId) {
+      console.error("No user ID found in token payload:", payload);
+      return null;
     }
 
-    function hideAlerts() {
-      errorAlert.style.display = 'none';
-      successAlert.style.display = 'none';
+    // Convert to string if it's a number (since your DB expects integer but we send as string)
+    return String(userId);
+
+  } catch (err) {
+    console.error("Error parsing token:", err);
+    return null;
+  }
+}
+
+function getUserEmailFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found in localStorage");
+      return null;
     }
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Try different possible field names for email
+    const email = payload.email || payload.user_email || payload.mail;
+
+    if (!email) {
+      console.error("No email found in token payload:", payload);
+      return null;
+    }
+
+    return email;
+
+  } catch (err) {
+    console.error("Error parsing token:", err);
+    return null;
+  }
+}
+
+// Function to move to next step
+function nextStep(currentStep, button) {
+  console.log("nextStep called with currentStep:", currentStep);
+  hideAlerts();
+
+  try {
+    if (currentStep === 1) {
+      numEmployees = parseInt(numEmployeesInput.value);
+      includeNightShift = nightShiftCheckbox.checked;
+      staffPerShift = parseInt(staffPerShiftSlider.value);
+
+      console.log("Step 1 values:", { numEmployees, includeNightShift, staffPerShift });
+
+      if (isNaN(numEmployees) || numEmployees < 1) {
+        showError('Please enter a valid number of employees');
+        return;
+      }
+
+      populateEmployeeSelect();
+
+      step1Indicator.className = 'step completed';
+      step2Indicator.className = 'step active';
+
+    } else if (currentStep === 2) {
+      selectedMonth = parseInt(monthSelect.value);
+      if (isNaN(selectedMonth) || selectedMonth < 1 || selectedMonth > 12) {
+        showError('Please select a valid month');
+        return;
+      }
+
+      step2Indicator.className = 'step completed';
+      step3Indicator.className = 'step active';
+    }
+
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.getElementById(`step${currentStep + 1}`).classList.add('active');
+
+  } catch (error) {
+    console.error("Error in nextStep:", error);
+    showError("An error occurred while moving to the next step");
+  }
+}
+
+// Go back to previous step
+function prevStep(currentStep) {
+  hideAlerts();
+
+  if (currentStep === 2) {
+    step1Indicator.className = 'step active';
+    step2Indicator.className = 'step';
+  } else if (currentStep === 3) {
+    step2Indicator.className = 'step active';
+    step3Indicator.className = 'step';
+  }
+
+  document.getElementById(`step${currentStep}`).classList.remove('active');
+  document.getElementById(`step${currentStep - 1}`).classList.add('active');
+}
+
+// Populate employee select dropdown
+function populateEmployeeSelect() {
+  employeeSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+  for (let i = 1; i <= numEmployees; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `Employee ${i}`;
+    employeeSelect.appendChild(option);
+  }
+}
+
+// Add vacation for employee
+addVacationButton.addEventListener('click', function() {
+  const employeeId = employeeSelect.value;
+  const startDay = parseInt(vacationStartInput.value);
+  const endDay = parseInt(vacationEndInput.value);
+
+  if (!employeeId) {
+    showError('Please select an employee');
+    return;
+  }
+
+  if (isNaN(startDay) || startDay < 1) {
+    showError('Please enter a valid start day');
+    return;
+  }
+
+  if (isNaN(endDay) || endDay < 1 || endDay < startDay) {
+    showError('Please enter a valid end day (must be >= start day)');
+    return;
+  }
+
+  vacations[employeeId] = [startDay, endDay];
+  updateVacationList();
+
+  employeeSelect.value = '';
+  vacationStartInput.value = '';
+  vacationEndInput.value = '';
+
+  showSuccess('Vacation added successfully');
+});
+
+// Update vacation list
+function updateVacationList() {
+  vacationList.innerHTML = '';
+
+  for (const employeeId in vacations) {
+    const dates = vacations[employeeId];
+
+    const li = document.createElement('li');
+    li.className = 'vacation-card';
+
+    const info = document.createElement('div');
+    info.className = 'vacation-info';
+
+    const employeeBadge = document.createElement('div');
+    employeeBadge.className = 'employee-badge';
+    employeeBadge.textContent = `Employee ${employeeId}`;
+
+    const dateInfo = document.createElement('div');
+    dateInfo.textContent = `Days ${dates[0]} - ${dates[1]}`;
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-btn';
+    deleteButton.textContent = 'X';
+    deleteButton.onclick = function() {
+      delete vacations[employeeId];
+      updateVacationList();
+    };
+
+    info.appendChild(employeeBadge);
+    info.appendChild(dateInfo);
+
+    li.appendChild(info);
+    li.appendChild(deleteButton);
+
+    vacationList.appendChild(li);
+  }
+}
+
+// Form submission
+stepForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  try {
+    const holidaysString = holidaysInput.value.trim();
+    const holidays = holidaysString ? holidaysString.split(',').map(h => h.trim()).filter(h => h) : [];
+
+    const stringVacations = {};
+    for (const employeeId in vacations) {
+      stringVacations[employeeId] = vacations[employeeId].map(day => String(day));
+    }
+
+    const n_shift_value = includeNightShift ? 1 : 2;
+
+    const data = {
+      e_num: parseInt(numEmployees),
+      n_shift: n_shift_value,
+      e_shift: parseInt(staffPerShift),
+      holi: holidays,
+      monthh: parseInt(selectedMonth),
+      vac: stringVacations
+    };
+
+    fetch('/d', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.blob();
+      } else {
+        throw new Error('Failed to generate schedule');
+      }
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Schedule.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showSuccess('Schedule generated successfully!');
+    })
+    .catch(error => {
+      showError(error.message);
+    });
+  } catch (error) {
+    showError('An error occurred. Please try again.');
+  }
+});
+
+// Alert helpers
+function showError(message) {
+  errorAlert.textContent = message;
+  errorAlert.style.display = 'block';
+  successAlert.style.display = 'none';
+}
+
+function showSuccess(message) {
+  successAlert.textContent = message;
+  successAlert.style.display = 'block';
+  errorAlert.style.display = 'none';
+}
+
+function hideAlerts() {
+  errorAlert.style.display = 'none';
+  successAlert.style.display = 'none';
+}
   </script>
 </body>
 </html>

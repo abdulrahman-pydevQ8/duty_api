@@ -38,4 +38,5 @@ zipp==3.21.0
 google-auth
 python-dotenv
 psycopg2-binary
+python-jose
 uvicorn

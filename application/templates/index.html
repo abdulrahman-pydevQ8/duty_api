@@ -402,10 +402,36 @@
           </div>
 
           <div class="slider-container">
-            <label for="staffPerShiftSlider">Staff per shift</label>
+            <label for="nightShiftSlider">Night shift staff per shift</label>
             <div class="slider-wrapper">
-              <input type="range" min="2" max="6" value="4" class="slider" id="staffPerShiftSlider">
-              <span class="slider-value" id="staffPerShiftValue">4</span>
+              <input type="range" min="2" max="10" value="4" class="slider" id="nightShiftSlider">
+              <span class="slider-value" id="nightShiftValue">4</span>
+            </div>
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="includePmShift">
+            <label for="includePmShift">Include PM shift</label>
+          </div>
+
+          <div class="slider-container">
+            <label for="pmShiftSlider">PM shift staff per shift</label>
+            <div class="slider-wrapper">
+              <input type="range" min="2" max="10" value="4" class="slider" id="pmShiftSlider">
+              <span class="slider-value" id="pmShiftValue">4</span>
+            </div>
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="includeWeekendShift">
+            <label for="includeWeekendShift">Include weekend shift</label>
+          </div>
+
+          <div class="slider-container">
+            <label for="weekendShiftSlider">Weekend shift staff per shift</label>
+            <div class="slider-wrapper">
+              <input type="range" min="2" max="10" value="4" class="slider" id="weekendShiftSlider">
+              <span class="slider-value" id="weekendShiftValue">4</span>
             </div>
           </div>
 
@@ -493,7 +519,11 @@ let numEmployees = 0;
 let selectedMonth = currentMonthIndex;
 let vacations = {};
 let includeNightShift = false;
-let staffPerShift = 4;
+let includePmShift = false;
+let includeWeekendShift = false;
+let nightShiftStaff = 4;
+let pmShiftStaff = 4;
+let weekendShiftStaff = 4;
 
 // Get DOM elements
 const stepForm = document.getElementById('stepForm');
@@ -501,17 +531,33 @@ const numEmployeesInput = document.getElementById('numEmployeesStep');
 const monthSelect = document.getElementById('monthStep');
 const holidaysInput = document.getElementById('holidaysStep');
 const nightShiftCheckbox = document.getElementById('includeNightShift');
-const staffPerShiftSlider = document.getElementById('staffPerShiftSlider');
-const staffPerShiftValue = document.getElementById('staffPerShiftValue');
+const pmShiftCheckbox = document.getElementById('includePmShift');
+const weekendShiftCheckbox = document.getElementById('includeWeekendShift');
+const nightShiftSlider = document.getElementById('nightShiftSlider');
+const pmShiftSlider = document.getElementById('pmShiftSlider');
+const weekendShiftSlider = document.getElementById('weekendShiftSlider');
+const nightShiftValue = document.getElementById('nightShiftValue');
+const pmShiftValue = document.getElementById('pmShiftValue');
+const weekendShiftValue = document.getElementById('weekendShiftValue');
 const saveButton = document.getElementById('saveButton');
 
 // Set the month select to the current month
 monthSelect.value = currentMonthIndex;
 
-// Update slider value display when slider changes
-staffPerShiftSlider.addEventListener('input', function() {
-  staffPerShiftValue.textContent = this.value;
-  staffPerShift = parseInt(this.value);
+// Update slider value displays when sliders change
+nightShiftSlider.addEventListener('input', function() {
+  nightShiftValue.textContent = this.value;
+  nightShiftStaff = parseInt(this.value);
+});
+
+pmShiftSlider.addEventListener('input', function() {
+  pmShiftValue.textContent = this.value;
+  pmShiftStaff = parseInt(this.value);
+});
+
+weekendShiftSlider.addEventListener('input', function() {
+  weekendShiftValue.textContent = this.value;
+  weekendShiftStaff = parseInt(this.value);
 });
 
 const employeeSelect = document.getElementById('employeeSelectStep');
@@ -552,12 +598,24 @@ saveButton.addEventListener('click', function() {
       stringVacations[employeeId] = vacations[employeeId].map(day => String(day));
     }
 
-    const n_shift_value = includeNightShift ? 1 : 2;
+    // Create include_shift array: [night_shift, pm_shift, weekend_shift]
+    const includeShiftArray = [
+      includeNightShift ? 1 : 0,
+      includePmShift ? 1 : 0,
+      includeWeekendShift ? 1 : 0
+    ];
+
+    // Create emp_per_shift array: [night_shift_staff, pm_shift_staff, weekend_shift_staff]
+    const empPerShiftArray = [
+      nightShiftStaff,
+      pmShiftStaff,
+      weekendShiftStaff
+    ];
 
     const scheduleData = {
       e_num: parseInt(numEmployeesInput.value),
-      n_shift: n_shift_value,
-      e_shift: parseInt(staffPerShiftSlider.value),
+      include_shift: includeShiftArray,
+      emp_per_shift: empPerShiftArray,
       holi: holidays,
       monthh: parseInt(monthSelect.value),
       vac: stringVacations,
@@ -679,9 +737,21 @@ function nextStep(currentStep, button) {
     if (currentStep === 1) {
       numEmployees = parseInt(numEmployeesInput.value);
       includeNightShift = nightShiftCheckbox.checked;
-      staffPerShift = parseInt(staffPerShiftSlider.value);
+      includePmShift = pmShiftCheckbox.checked;
+      includeWeekendShift = weekendShiftCheckbox.checked;
+      nightShiftStaff = parseInt(nightShiftSlider.value);
+      pmShiftStaff = parseInt(pmShiftSlider.value);
+      weekendShiftStaff = parseInt(weekendShiftSlider.value);
 
-      console.log("Step 1 values:", { numEmployees, includeNightShift, staffPerShift });
+      console.log("Step 1 values:", {
+        numEmployees,
+        includeNightShift,
+        includePmShift,
+        includeWeekendShift,
+        nightShiftStaff,
+        pmShiftStaff,
+        weekendShiftStaff
+      });
 
       if (isNaN(numEmployees) || numEmployees < 1) {
         showError('Please enter a valid number of employees');
@@ -822,12 +892,24 @@ stepForm.addEventListener('submit', function(e) {
       stringVacations[employeeId] = vacations[employeeId].map(day => String(day));
     }
 
-    const n_shift_value = includeNightShift ? 1 : 2;
+    // Create include_shift array: [night_shift, pm_shift, weekend_shift]
+    const includeShiftArray = [
+      includeNightShift ? 1 : 0,
+      includePmShift ? 1 : 0,
+      includeWeekendShift ? 1 : 0
+    ];
+
+    // Create emp_per_shift array: [night_shift_staff, pm_shift_staff, weekend_shift_staff]
+    const empPerShiftArray = [
+      nightShiftStaff,
+      pmShiftStaff,
+      weekendShiftStaff
+    ];
 
     const data = {
       e_num: parseInt(numEmployees),
-      n_shift: n_shift_value,
-      e_shift: parseInt(staffPerShift),
+      include_shift: includeShiftArray,
+      emp_per_shift: empPerShiftArray,
       holi: holidays,
       monthh: parseInt(selectedMonth),
       vac: stringVacations

@@ -39,7 +39,7 @@ class Eframe:
             nt = 0  # while loop counter
             broke = False
 
-            while k < self.shift_limit:
+            while k < self.shift_limit[0]:
                 nt += 1
                 if nt > len(self.names):
                     print("broke N shift")
@@ -62,8 +62,9 @@ class Eframe:
                     if self.main_keys[i] in self.vacation[name]:
                         pass
                     elif name not in self.N_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i - 1]]:
-                        print(self.data.n_shift)
-                        if self.data.n_shift == 1:
+                        print(self.data.include_shift[0])
+                        print('this is self.data.include_shift[0] guyssssssssssssssssssssssssssssssssssssssssssssssss')
+                        if self.data.include_shift[0] == 1:
                             self.N_dic[self.main_keys[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
                         k += 1  # Increment unique count for this key
@@ -102,10 +103,12 @@ class Eframe:
         for i in range(len(self.main_keys)):
             k = 0  # Counter to ensure four unique names are added per key
             PM_c = 0  # while loop counter
+            brokePM = False
 
-            while k < self.shift_limit:
-                if PM_c >> len(self.main_keys):
+            while k < self.shift_limit[1]:
+                if PM_c > len(self.main_keys):
                     print("broke PM shift")
+                    brokePM = True
                     break
                 PM_c += 1
 
@@ -124,10 +127,16 @@ class Eframe:
                         pass
                     elif name not in self.PM_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i]] \
                             and name not in self.N_dic[self.main_keys[i - 1]]:
-                        self.PM_dic[self.main_keys[i]].append(name)  # Add to AM_dic
-                        selection_counts[name] += 1  # Increment the count for this name
+                        print(self.data.include_shift[1])
+                        print('this is self.data.include_shift[1] guyssssssssssssssssssssssssssssssssssssssssssssssss')
+                        if self.data.include_shift[1] == 1:
+                            self.PM_dic[self.main_keys[i]].append(name)  # Add to AM_dic
+                            selection_counts[name] += 1  # Increment the count for this name
                         k += 1  # Increment unique count for this key
                         break  # Exit inner loop to move to the next unique position
+
+            if brokePM:
+                break
 
         PM_names_list = self.names.copy()
 
@@ -157,9 +166,11 @@ class Eframe:
         for i in range(len(self.week_end)):
             k = 0
             WK_c = 0  # while loop counter
-            while k < self.shift_limit:
+            brokeWK = False
+            while k < self.shift_limit[2]:
                 if WK_c >> len(self.names):
                     print("broke PM shift")
+                    brokeWK = True
                     break
                 WK_c += 1
 
@@ -179,11 +190,13 @@ class Eframe:
                             and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 2]] \
                             and name not in self.WK_dic[self.week_end[i]] \
                             and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 1]]:
-                        self.WK_dic[self.week_end[i]].append(name)  # Add to AM_dic
-                        selection_counts[name] += 1  # Increment the count for this name
+                        if self.data.include_shift[2] == 1:
+                            self.WK_dic[self.week_end[i]].append(name)  # Add to AM_dic
+                            selection_counts[name] += 1  # Increment the count for this name
                         k += 1  # Increment unique count for this key
                         break  # Exit inner loop to move to the next unique position
-
+            if brokeWK:
+                break
         WK_names_list = self.names.copy()
 
         WK = self.WK_dic.copy()
@@ -257,12 +270,10 @@ class Eframe:
         self.main_keys_days.insert(0, ' ')
 
         dataa.update(merge_dicts(PM, N, WK))
-        print(self.N_dic)
-        print(self.PM_dic)
-        print(self.WK_dic)
-        for key, value in dataa.items():
+
+        '''for key, value in dataa.items():
             print(f"{key}: {value}")
-            print(f"{key}: {len(value)}")
+            print(f"{key}: {len(value)}")'''
         print(dataa)
         df = pd.DataFrame(dataa)
         df.to_excel('Schedule.xlsx', index=False, engine='openpyxl')

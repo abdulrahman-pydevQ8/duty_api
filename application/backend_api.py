@@ -99,10 +99,10 @@ app.add_middleware(
 
 class Data(BaseModel):
     e_num: int
-    n_shift: int
-    e_shift: int
+    include_shift: list # a list contain 3 elements first is n shift second is pm third is am shift 1 mean allow 0 mean not
+    emp_per_shift: list # determines the shift size for each shift
     holi: list = Field(default=[])  # Default holidays
-    monthh: int = Field(default=0)
+    monthh: int = Field(default=0) #month that to schedule in
     vac: dict = Field(default={})  # Default vacation data
     down: str = Field(default="down")
 
@@ -194,6 +194,11 @@ async def authted(code: str = None, error: str = None):
             "name": id_info.get("name", ""),
             "picture": id_info.get("picture", "")
         }
+        if user_info["email"] == 'darkiiq8@gmail.com':
+            print('this has been axxeiejeoih')
+            path = os.path.join(os.path.dirname(__file__), "templates", "admin.html")
+            html_path = Path(path).read_text(encoding="utf-8")
+            return HTMLResponse(content=html_path)
         print('under this is the user_id')
         print(user_info['user_id'])
 
@@ -283,7 +288,7 @@ async def get(data: Data, background_tasks: BackgroundTasks):
         T.next_nmonth(data.monthh)
     week_end.extend(data.holi)
 
-    e = Eframe(main_dic, main_keys, names_list, data.e_shift, data, vacations, main_keys_days, week_end)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end)
 
     e.N()
     e.PM()
@@ -358,6 +363,11 @@ async def servefile(user_file:servefile):
 @app.post('/deletefile')
 async def deletefile(user_file:Filee):
     delete_user_file(user_file.user_email)
+
+'''@app.post('/admin')
+async def admin(admin_id:servefile):
+    if admin_id == 'darkiiq8@gmail.com':
+        return 'meow'''
 
 
 

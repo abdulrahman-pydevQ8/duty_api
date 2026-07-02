@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Schedule Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #5b76f7;
+      --secondary: #6c757d;
+      --success: #28a745;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --background: #f5f7fa;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background: var(--background);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .app-header h1 { font-size: 1.6rem; margin: 0; }
+
+    .back-link {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      text-decoration: none;
+    }
+
+    @media (max-width: 480px) {
+      .app-header { display: flex; flex-direction: column; align-items: center; padding: 15px; }
+      .back-link { position: static; transform: none; margin-bottom: 10px; }
+    }
+
+    .form-container { padding: 30px; }
+
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .step { display: flex; align-items: center; flex-direction: column; flex: 1; }
+
+    .step-number {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #dee2e6;
+      color: #6c757d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .step.active .step-number { background-color: var(--primary); color: white; }
+    .step.completed .step-number { background-color: var(--success); color: white; }
+
+    .step-label { font-size: 0.8rem; color: #6c757d; text-align: center; }
+    .step.active .step-label { color: var(--primary); font-weight: bold; }
+
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .form-control:focus { outline: none; border-color: var(--primary); }
+
+    .help-text { font-size: 0.8rem; color: #6c757d; margin-top: 6px; }
+
+    .btn {
+      display: inline-block;
+      font-weight: 500;
+      text-align: center;
+      padding: 10px 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary { color: white; background-color: var(--primary); }
+    .btn-primary:hover { background-color: #3249c9; }
+    .btn-secondary { color: white; background-color: var(--secondary); }
+    .btn-secondary:hover { background-color: #5a6268; }
+    .btn-success { color: white; background-color: var(--success); }
+    .btn-success:hover { background-color: #218838; }
+    .btn-block { display: block; width: 100%; }
+
+    .btn-group { display: flex; gap: 10px; margin-top: 30px; }
+
+    .alert {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert-danger { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+    .alert-success { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-container input[type="checkbox"] { margin-right: 8px; }
+    .checkbox-container label { display: inline; margin-bottom: 0; }
+
+    .slider-container { margin-top: 15px; margin-bottom: 20px; }
+    .slider-container label { display: block; margin-bottom: 8px; }
+
+    .slider-wrapper { display: flex; align-items: center; }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      margin-right: 10px;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider-value { min-width: 30px; text-align: center; font-weight: bold; }
+
+    /* ===================== DARK THEME OVERRIDES ===================== */
+    :root {
+      --primary: #5b76f7;
+      --secondary: #8b93a7;
+      --success: #2ea043;
+      --danger: #f0556b;
+      --light: #1b1f2b;
+      --dark: #e8eaf0;
+      --background: #0e1016;
+    }
+    body { background: #0e1016 !important; color: #c7ccda !important; }
+
+    /* Navbar */
+    .navbar { background-color: #14171f !important; border-bottom: 1px solid #232838; box-shadow: 0 1px 0 #232838 !important; }
+    .nav-links a { color: #c7ccda !important; }
+    .nav-links a:hover { color: #8fa0ff !important; }
+    .signin-btn { background-color: #5b76f7 !important; color: #fff !important; }
+    .signin-btn:hover { background-color: #6d85ff !important; }
+    .profile-name { color: #e8eaf0 !important; }
+    .profile-pic { border-color: rgba(255,255,255,0.18) !important; }
+
+    /* Sidebar */
+    .sidebar { background-color: #14171f !important; border-right: 1px solid #232838; box-shadow: none !important; }
+    .sidebar-menu-link { color: #c7ccda !important; }
+    .sidebar-menu-link:hover { background-color: rgba(91,118,247,0.12) !important; color: #8fa0ff !important; }
+    .sidebar-menu-link.active { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; border-left-color: #5b76f7 !important; }
+    .sidebar-section-title { color: #6e768c !important; }
+    .sidebar-footer { color: #6e768c !important; border-top-color: #232838 !important; }
+
+    /* Headings & text */
+    .empty-title, .teams-title, .files-title, .form-title, .team-title, .team-name,
+    .file-name, .schedule-title, .modal-title, .employee-name, .form-label,
+    .app-header h1 { color: #e8eaf0 !important; }
+    .empty-message, .team-meta, .file-details, .employee-meta, .help-text,
+    .no-matches, .step-label { color: #8b93a7 !important; }
+
+    /* Cards & containers */
+    .team-card, .file-item, .form-container, .schedule-container, .team-header,
+    .app-container, .modal-content {
+      background: #14171f !important;
+      border: 1px solid #232838 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35) !important;
+    }
+    .team-card:hover, .file-item:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+      border-color: #2b3140 !important;
+    }
+
+    /* Inputs */
+    .form-input, .form-control, .control-input {
+      background: #1b1f2b !important;
+      border: 1px solid #2b3140 !important;
+      color: #e8eaf0 !important;
+    }
+    .form-input:focus, .form-control:focus { border-color: #5b76f7 !important; }
+    .form-input::placeholder, .form-control::placeholder { color: #565d70 !important; }
+    select.form-input option, select.form-control option { background: #1b1f2b; color: #e8eaf0; }
+
+    /* Buttons */
+    .btn-primary { background-color: #5b76f7 !important; color: #fff !important; }
+    .btn-primary:hover { background-color: #6d85ff !important; }
+    .btn-success { background-color: #2ea043 !important; color: #fff !important; }
+    .btn-success:hover { background-color: #34b14d !important; }
+    .btn-danger { background-color: #f0556b !important; color: #fff !important; }
+    .btn-danger:hover { background-color: #f5697d !important; }
+    .btn-secondary { background-color: #232838 !important; color: #c7ccda !important; }
+    .btn-secondary:hover { background-color: #2b3140 !important; }
+
+    /* Schedule wizard */
+    .app-header { background: #1b2030 !important; border-bottom: 1px solid #232838; }
+    .app-header h1, .app-header .back-link { color: #e8eaf0 !important; }
+    .step-number { background-color: #1b1f2b !important; color: #6e768c !important; border: 1px solid #2b3140; }
+    .step.active .step-number { background-color: #5b76f7 !important; color: #fff !important; border-color: #5b76f7; }
+    .step.completed .step-number { background-color: #2ea043 !important; color: #fff !important; border-color: #2ea043; }
+    .step.active .step-label { color: #8fa0ff !important; }
+
+    /* Alerts */
+    .alert-danger { background-color: rgba(240,85,107,0.12) !important; border: 1px solid rgba(240,85,107,0.4) !important; color: #ff8295 !important; }
+    .alert-success { background-color: rgba(46,160,67,0.12) !important; border: 1px solid rgba(46,160,67,0.4) !important; color: #5fd07a !important; }
+
+    /* Sliders */
+    .slider { background: #2b3140 !important; }
+    .slider::-webkit-slider-thumb { background: #5b76f7 !important; }
+    .slider::-moz-range-thumb { background: #5b76f7 !important; }
+
+    /* Vacation cards & badges */
+    .vacation-card { background-color: #1b1f2b !important; border: 1px solid #232838; }
+    .employee-badge { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; }
+    .delete-btn { color: #f0556b !important; }
+
+    /* Members page */
+    .schedule-header { border-bottom-color: #232838 !important; }
+    .employee-row { border-bottom-color: #232838 !important; }
+    .employee-row:hover { background-color: rgba(91,118,247,0.05) !important; }
+    .role-leader { background-color: rgba(91,118,247,0.16) !important; color: #9db0ff !important; }
+    .role-new { background-color: #232838 !important; color: #9aa3b8 !important; }
+    .modal-header { border-bottom-color: #232838 !important; }
+    .modal-footer { border-top-color: #232838 !important; }
+    .modal-close { color: #8b93a7 !important; }
+    .modal-close:hover { background-color: #232838 !important; }
+    .back-link { color: #8fa0ff !important; }
+
+    /* File icon */
+    .file-icon { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; }
+
+
+    /* ===== Option cards (frontend only) ===== */
+    .section-head { display:flex; align-items:baseline; justify-content:space-between; margin:24px 0 12px; gap:12px; }
+    .section-head-title { font-size:0.92rem; font-weight:600; color:#c7ccda; }
+    .section-head-sub { font-size:0.78rem; color:#6e768c; }
+    .shift-cards { display:flex; flex-direction:column; gap:10px; }
+    .shift-card { background:#171a23; border:1px solid #232838; border-radius:13px; padding:15px 16px; transition:border-color .18s ease, background .18s ease; }
+    .shift-card.on { background:#181d2a; border-color:rgba(91,118,247,0.4); }
+    .shift-card-head { display:flex; align-items:center; gap:14px; }
+    .switch { position:relative; display:inline-flex; flex-shrink:0; cursor:pointer; }
+    .switch input { position:absolute; opacity:0; width:0; height:0; margin:0; }
+    .switch-track { width:42px; height:24px; border-radius:20px; background:#343b4d; position:relative; transition:background .18s ease; }
+    .switch-knob { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .18s ease; }
+    .switch input:checked + .switch-track { background:#5b76f7; }
+    .switch input:checked + .switch-track .switch-knob { transform:translateX(18px); }
+    .shift-card-titles { flex:1; cursor:pointer; }
+    .shift-card-title { font-size:0.95rem; font-weight:600; color:#e8eaf0; }
+    .shift-card-sub { font-size:0.78rem; color:#6e768c; margin-top:1px; }
+    .shift-card-badge { font-size:0.78rem; font-weight:600; color:#8fa0ff; background:rgba(91,118,247,0.12); padding:4px 10px; border-radius:20px; display:none; white-space:nowrap; }
+    .shift-card.on .shift-card-badge { display:block; }
+    .shift-card-body { display:none; margin-top:16px; padding-top:16px; border-top:1px solid #232838; }
+    .shift-card.on .shift-card-body { display:block; }
+    .slider-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+    .slider-row-label { font-size:0.82rem; color:#9aa3b8; }
+    .slider-row .slider-value { color:#e8eaf0; font-weight:700; }
+    .shift-card .slider { margin-right:0; }
+    .title-sub { font-size:0.95rem; color:#8b93a7; margin:-8px 0 24px; }
+
+
+    /* ============ DC POLISH LAYER (matches Schedule Generator DC) ============ */
+    body {
+      background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, #0e1016 60%) !important;
+      background-attachment: fixed !important;
+    }
+    /* Card surfaces: rounded + soft deep shadow */
+    .app-container, .form-container, .content-container, .schedule-container,
+    .team-header, .modal-content {
+      border-radius: 16px !important;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45) !important;
+    }
+    .team-card, .file-item {
+      border-radius: 14px !important;
+    }
+    .team-card:hover, .file-item:hover {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    }
+    /* Inputs: 10px radius, comfortable padding, crisp focus ring */
+    .form-input, .form-control, .control-input, select.form-input, select.form-control {
+      border-radius: 10px !important;
+      padding: 12px 14px !important;
+    }
+    .form-input:focus, .form-control:focus, .control-input:focus {
+      border-color: #5b76f7 !important;
+      box-shadow: 0 0 0 3px rgba(91,118,247,0.18) !important;
+      outline: none !important;
+    }
+    /* Buttons: 10px radius, weight + smooth hover */
+    .btn, .btn-primary, .btn-secondary, .btn-success, .btn-danger,
+    .signin-btn, button[type="submit"] {
+      border-radius: 10px !important;
+      font-weight: 600 !important;
+      transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+    }
+    /* Wizard header: subtle elevated band like the DC */
+    .app-header { background: #1b2030 !important; }
+    .app-subtitle { font-size: 0.82rem; color: #8b93a7 !important; margin: 3px 0 0; }
+    /* Step pills spacing parity */
+    .step-number { font-weight: 700 !important; }
+
+    /* ===== DC header pill + checkmark step dots ===== */
+    .app-header {
+      background: transparent !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      text-align: left !important;
+      gap: 14px !important;
+      padding: 22px 28px !important;
+    }
+    .back-link {
+      position: static !important;
+      transform: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 7px 11px !important;
+      border: 1px solid #2b3140 !important;
+      border-radius: 9px !important;
+      font-size: 14px !important;
+      color: #8b93a7 !important;
+      white-space: nowrap !important;
+      transition: border-color .18s ease, color .18s ease !important;
+    }
+    .back-link:hover { border-color: #3a4255 !important; color: #e8eaf0 !important; }
+    .back-link::before { content: '\2190'; }
+    .app-header h1 { font-size: 17px !important; font-weight: 700 !important; letter-spacing: -0.01em; }
+    .step.completed .step-number { font-size: 0 !important; }
+    .step.completed .step-number::after { content: '\2713'; font-size: 15px; }
+
+
+    /* ===== DC-style selects (custom caret, dark) ===== */
+    select.form-control, select.form-input, select.control-input {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%238b93a7' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 14px center !important;
+      padding-right: 38px !important;
+      cursor: pointer !important;
+    }
+    select.form-control option, select.form-input option, select.control-input option {
+      background: #1b1f2b;
+      color: #e8eaf0;
+    }
+
+    /* Fix: .form-container sits INSIDE .app-container here — keep it flat so there's one card, not a card-in-a-card */
+    .app-container .form-container {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <a href="/" class="back-link">Back</a>
+      <div>
+        <h1>Team Schedule Generator</h1>
+        <p class="app-subtitle" id="appSubtitle">Step 1 of 3 · Select team</p>
+      </div>
+    </header>
+
+    <div class="form-container">
+      <div class="step-indicator">
+        <div class="step active" id="step1-indicator">
+          <div class="step-number">1</div>
+          <div class="step-label">Team</div>
+        </div>
+        <div class="step" id="step2-indicator">
+          <div class="step-number">2</div>
+          <div class="step-label">Shifts</div>
+        </div>
+        <div class="step" id="step3-indicator">
+          <div class="step-number">3</div>
+          <div class="step-label">Month</div>
+        </div>
+      </div>
+
+      <div id="errorAlert" class="alert alert-danger"></div>
+      <div id="successAlert" class="alert alert-success"></div>
+
+      <form id="stepForm">
+
+        <!-- Step 1: Select Team -->
+        <div class="step-content active" id="step1">
+          <div class="form-group">
+            <label for="teamSelect">Select Team</label>
+            <select class="form-control" id="teamSelect">
+              <option value="">-- Loading teams... --</option>
+            </select>
+            <p class="help-text">Choose the team to build the schedule from</p>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" onclick="nextStep(1, this)">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Shifts -->
+        <div class="step-content" id="step2">
+          <div class="section-head">
+            <span class="section-head-title">Shift types</span>
+            <span class="section-head-sub">Turn on the shifts you run</span>
+          </div>
+
+          <div class="shift-cards">
+            <div class="shift-card" data-shift="night">
+              <div class="shift-card-head">
+                <label class="switch">
+                  <input type="checkbox" id="includeNightShift">
+                  <span class="switch-track"><span class="switch-knob"></span></span>
+                </label>
+                <div class="shift-card-titles">
+                  <div class="shift-card-title">Night shift</div>
+                  <div class="shift-card-sub">Overnight coverage</div>
+                </div>
+                <div class="shift-card-badge"><span id="nightShiftBadge">4</span> staff</div>
+              </div>
+              <div class="shift-card-body">
+                <div class="slider-row">
+                  <span class="slider-row-label">Staff per shift</span>
+                  <span class="slider-value" id="nightShiftValue">4</span>
+                </div>
+                <input type="range" min="2" max="10" value="4" class="slider" id="nightShiftSlider">
+              </div>
+            </div>
+
+            <div class="shift-card" data-shift="pm">
+              <div class="shift-card-head">
+                <label class="switch">
+                  <input type="checkbox" id="includePmShift">
+                  <span class="switch-track"><span class="switch-knob"></span></span>
+                </label>
+                <div class="shift-card-titles">
+                  <div class="shift-card-title">PM shift</div>
+                  <div class="shift-card-sub">Afternoon & evening</div>
+                </div>
+                <div class="shift-card-badge"><span id="pmShiftBadge">4</span> staff</div>
+              </div>
+              <div class="shift-card-body">
+                <div class="slider-row">
+                  <span class="slider-row-label">Staff per shift</span>
+                  <span class="slider-value" id="pmShiftValue">4</span>
+                </div>
+                <input type="range" min="2" max="10" value="4" class="slider" id="pmShiftSlider">
+              </div>
+            </div>
+
+            <div class="shift-card" data-shift="weekend">
+              <div class="shift-card-head">
+                <label class="switch">
+                  <input type="checkbox" id="includeWeekendShift">
+                  <span class="switch-track"><span class="switch-knob"></span></span>
+                </label>
+                <div class="shift-card-titles">
+                  <div class="shift-card-title">Weekend shift</div>
+                  <div class="shift-card-sub">Saturday & Sunday</div>
+                </div>
+                <div class="shift-card-badge"><span id="weekendShiftBadge">4</span> staff</div>
+              </div>
+              <div class="shift-card-body">
+                <div class="slider-row">
+                  <span class="slider-row-label">Staff per shift</span>
+                  <span class="slider-value" id="weekendShiftValue">4</span>
+                </div>
+                <input type="range" min="2" max="10" value="4" class="slider" id="weekendShiftSlider">
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2, this)">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Month & Holidays -->
+        <div class="step-content" id="step3">
+          <div class="form-group">
+            <label for="monthStep">Select Month</label>
+            <select class="form-control" id="monthStep">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <p class="help-text">Select the month to schedule</p>
+          </div>
+
+          <div class="form-group">
+            <label for="holidaysInput">Holidays (comma-separated days, optional)</label>
+            <input type="text" class="form-control" id="holidaysInput" placeholder="E.g., 2,3,15">
+            <p class="help-text">Enter comma-separated day numbers for public holidays</p>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+            <button type="submit" class="btn btn-primary">Download Schedule</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────
+    let selectedTeamId = null;
+    let teamMembers = [];
+
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    const teamSelect       = document.getElementById('teamSelect');
+    const nightShiftSlider = document.getElementById('nightShiftSlider');
+    const pmShiftSlider    = document.getElementById('pmShiftSlider');
+    const weekendShiftSlider = document.getElementById('weekendShiftSlider');
+    const nightShiftValue  = document.getElementById('nightShiftValue');
+    const pmShiftValue     = document.getElementById('pmShiftValue');
+    const weekendShiftValue = document.getElementById('weekendShiftValue');
+    const monthSelect      = document.getElementById('monthStep');
+    const errorAlert       = document.getElementById('errorAlert');
+    const successAlert     = document.getElementById('successAlert');
+
+    // ── Step indicators ────────────────────────────────────────────────────
+    const indicators = [
+      document.getElementById('step1-indicator'),
+      document.getElementById('step2-indicator'),
+      document.getElementById('step3-indicator'),
+    ];
+
+    // ── Sliders ────────────────────────────────────────────────────────────
+    nightShiftSlider.addEventListener('input', () => nightShiftValue.textContent = nightShiftSlider.value);
+    pmShiftSlider.addEventListener('input',    () => pmShiftValue.textContent    = pmShiftSlider.value);
+    weekendShiftSlider.addEventListener('input',() => weekendShiftValue.textContent = weekendShiftSlider.value);
+
+    // ── JWT helpers ────────────────────────────────────────────────────────
+    function parseJwt(token) {
+      try {
+        return JSON.parse(atob(token.split('.')[1]));
+      } catch { return null; }
+    }
+
+    function getUserId() {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      const p = parseJwt(token);
+      return p ? (p.user_id || p.sub || p.id) : null;
+    }
+
+    // ── Load teams on page load ────────────────────────────────────────────
+    async function loadTeams() {
+      const userId = getUserId();
+      if (!userId) {
+        teamSelect.innerHTML = '<option value="">Sign in to see your teams</option>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/user_teams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: String(userId) })
+        });
+
+        if (!res.ok) throw new Error('Failed to load teams');
+        const data = await res.json();
+        const teams = data.teams || [];
+
+        if (teams.length === 0) {
+          teamSelect.innerHTML = '<option value="">No teams found — create one first</option>';
+          return;
+        }
+
+        teamSelect.innerHTML = '<option value="">-- Select a team --</option>';
+        teams.forEach(([name, id]) => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = name;
+          teamSelect.appendChild(opt);
+        });
+
+        // Pre-select a team if passed in the URL (e.g. from the team overview page)
+        const preId = new URLSearchParams(window.location.search).get('team_id');
+        if (preId) {
+          teamSelect.value = preId;
+          teamSelect.dispatchEvent(new Event('change'));
+        }
+      } catch (err) {
+        teamSelect.innerHTML = '<option value="">Error loading teams</option>';
+      }
+    }
+
+    // ── Load members when team changes ─────────────────────────────────────
+    teamSelect.addEventListener('change', async () => {
+      const teamId = teamSelect.value;
+      if (!teamId) {
+        selectedTeamId = null;
+        teamMembers = [];
+        return;
+      }
+
+      selectedTeamId = parseInt(teamId);
+
+      try {
+        const res = await fetch('/serve_members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ team_id: selectedTeamId })
+        });
+
+        if (!res.ok) throw new Error('Failed to load members');
+        const data = await res.json();
+        teamMembers = data.members || [];
+      } catch (err) {
+        teamMembers = [];
+      }
+    });
+
+    // ── Step navigation ────────────────────────────────────────────────────
+    function nextStep(current, btn) {
+      hideAlerts();
+
+      if (current === 1) {
+        if (!selectedTeamId) { showError('Please select a team'); return; }
+        if (teamMembers.length === 0) { showError('Selected team has no members'); return; }
+        indicators[0].className = 'step completed';
+        indicators[1].className = 'step active';
+      } else if (current === 2) {
+        indicators[1].className = 'step completed';
+        indicators[2].className = 'step active';
+      }
+
+      document.getElementById(`step${current}`).classList.remove('active');
+      document.getElementById(`step${current + 1}`).classList.add('active');
+      updateSubtitle(current + 1);
+    }
+
+    function prevStep(current) {
+      hideAlerts();
+      if (current === 2) { indicators[0].className = 'step active'; indicators[1].className = 'step'; }
+      if (current === 3) { indicators[1].className = 'step active'; indicators[2].className = 'step'; }
+      document.getElementById(`step${current}`).classList.remove('active');
+      document.getElementById(`step${current - 1}`).classList.add('active');
+      updateSubtitle(current - 1);
+    }
+
+    function updateSubtitle(step) {
+      var labels = { 1: 'Select team', 2: 'Shift types', 3: 'Month & holidays' };
+      var el = document.getElementById('appSubtitle');
+      if (el && labels[step]) el.textContent = 'Step ' + step + ' of 3 · ' + labels[step];
+    }
+
+    // ── Form submit ────────────────────────────────────────────────────────
+    document.getElementById('stepForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      hideAlerts();
+
+      const holidays = document.getElementById('holidaysInput').value.trim();
+
+      const payload = {
+        team_id:       selectedTeamId,
+        include_shift: [
+          document.getElementById('includeNightShift').checked   ? 1 : 0,
+          document.getElementById('includePmShift').checked      ? 1 : 0,
+          document.getElementById('includeWeekendShift').checked ? 1 : 0,
+        ],
+        emp_per_shift: [
+          parseInt(nightShiftSlider.value),
+          parseInt(pmShiftSlider.value),
+          parseInt(weekendShiftSlider.value),
+        ],
+        holi:   holidays ? holidays.split(',').map(h => h.trim()).filter(Boolean) : [],
+        monthh: parseInt(monthSelect.value),
+        down:   'down',
+      };
+
+      const submitBtn = e.target.querySelector('[type="submit"]');
+      submitBtn.textContent = 'Generating...';
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/schedule_team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err || `Server error ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'TeamSchedule.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showSuccess('Schedule generated and downloaded!');
+      } catch (err) {
+        showError('Error: ' + err.message);
+      } finally {
+        submitBtn.textContent = 'Download Schedule';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // ── Alert helpers ──────────────────────────────────────────────────────
+    function showError(msg)   { errorAlert.textContent = msg;   errorAlert.style.display = 'block';   successAlert.style.display = 'none'; }
+    function showSuccess(msg) { successAlert.textContent = msg; successAlert.style.display = 'block'; errorAlert.style.display = 'none'; }
+    function hideAlerts()     { errorAlert.style.display = 'none'; successAlert.style.display = 'none'; }
+
+    // ── Set default month to next month ───────────────────────────────────
+    const nextMonth = new Date().getMonth() + 2;
+    monthSelect.value = nextMonth > 12 ? 1 : nextMonth;
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    loadTeams();
+  </script>
+
+  <script>
+    (function () {
+      function wire(cbId, slId, valId, badgeId) {
+        var cb = document.getElementById(cbId);
+        if (!cb) return;
+        var card = cb.closest('.shift-card');
+        var sl = document.getElementById(slId);
+        var val = document.getElementById(valId);
+        var badge = document.getElementById(badgeId);
+        function syncOn() { if (card) card.classList.toggle('on', cb.checked); }
+        function syncVal() { if (sl) { if (val) val.textContent = sl.value; if (badge) badge.textContent = sl.value; } }
+        cb.addEventListener('change', syncOn);
+        if (sl) sl.addEventListener('input', syncVal);
+        var titles = card ? card.querySelector('.shift-card-titles') : null;
+        if (titles) titles.addEventListener('click', function () { cb.checked = !cb.checked; syncOn(); });
+        syncOn(); syncVal();
+      }
+      wire('includeNightShift', 'nightShiftSlider', 'nightShiftValue', 'nightShiftBadge');
+      wire('includePmShift', 'pmShiftSlider', 'pmShiftValue', 'pmShiftBadge');
+      wire('includeWeekendShift', 'weekendShiftSlider', 'weekendShiftValue', 'weekendShiftBadge');
+    })();
+  </script>
+</body>
+</html>

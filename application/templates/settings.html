@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Syncra-Labs</title>
+  <style>
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Colors and variables */
+    :root {
+      --primary: #5b76f7;
+      --secondary: #6c757d;
+      --success: #28a745;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --background: #f5f7fa;
+      --sidebar-width: 250px;
+      --sidebar-collapsed-width: 70px;
+      --transition-speed: 0.3s;
+    }
+
+    /* Base styles */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background: var(--background);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      background-color: var(--dark);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    /* Logo section */
+    .logo {
+      color: white;
+      font-weight: bold;
+      font-size: 1.3rem;
+      text-decoration: none;
+      width: 33%;
+      display: flex;
+      align-items: center;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      margin-left: -6px;
+      margin-right: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .menu-toggle:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Center navigation section */
+    .nav-center {
+      width: 34%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links li {
+      margin: 0 15px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: #b3b3b3;
+    }
+
+    /* Auth buttons section */
+    .auth-section {
+      width: 33%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1;
+      transition: all 0.2s ease;
+    }
+
+    .signin-btn {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .signin-btn:hover {
+      background-color: #3249c9;
+    }
+
+    /* Profile section */
+    .profile-section {
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: border-color 0.2s ease;
+    }
+
+    .profile-pic:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .profile-name {
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 60px;
+      height: calc(100vh - 60px);
+      width: var(--sidebar-width);
+      background-color: white;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform var(--transition-speed), width var(--transition-speed);
+      z-index: 900;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .sidebar-content {
+      padding: 20px 0;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu-item {
+      margin: 5px 0;
+    }
+
+    .sidebar-menu-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px 12px 17px;
+      color: var(--dark);
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-menu-link:hover {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+    }
+
+    .sidebar-menu-link.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+      border-left: 3px solid var(--primary);
+    }
+
+    .sidebar-icon {
+      font-size: 1.2rem;
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 3px;
+    }
+
+    .sidebar-text {
+      margin-left: 15px;
+      transition: opacity var(--transition-speed), width var(--transition-speed);
+      white-space: nowrap;
+    }
+
+    .collapsed .sidebar-menu-link {
+      padding-left: 20px;
+    }
+
+    .collapsed .sidebar-menu-link.active {
+      border-left: 3px solid var(--primary);
+      padding-left: 17px;
+    }
+
+    .collapsed .sidebar-text {
+      opacity: 0;
+      width: 0;
+      margin-left: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-footer {
+      padding: 15px 20px;
+      border-top: 1px solid #eee;
+      font-size: 0.85rem;
+      color: var(--secondary);
+      transition: opacity var(--transition-speed);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .collapsed .sidebar-footer {
+      opacity: 0;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding-top: 60px;
+      min-height: 100vh;
+      transition: margin-left var(--transition-speed);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: max(80px, 15vh) 20px 20px 20px;
+    }
+
+    .main-content.expanded {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+
+    /* Settings card */
+    .form-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .form-title {
+      font-size: 1.5rem;
+      color: var(--dark);
+      margin-bottom: 20px;
+    }
+
+    .settings-account {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .settings-pic {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .settings-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .settings-email {
+      font-size: 0.9rem;
+      color: var(--secondary);
+    }
+
+    .settings-placeholder {
+      font-size: 0.95rem;
+      color: var(--secondary);
+      margin-bottom: 25px;
+    }
+
+    .contact-toggle {
+      display: inline-block;
+      font-size: 0.95rem;
+      color: var(--primary);
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .contact-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .contact-textarea {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      resize: vertical;
+      min-height: 100px;
+      margin-bottom: 12px;
+    }
+
+    .contact-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .contact-status {
+      font-size: 0.9rem;
+      color: var(--secondary);
+      margin-top: 10px;
+    }
+
+    .contact-form {
+      margin-bottom: 25px;
+    }
+
+    .btn {
+      display: inline-block;
+      font-weight: 500;
+      text-align: center;
+      padding: 12px 30px;
+      font-size: 1rem;
+      line-height: 1.5;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+      border: none;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .btn-primary {
+      color: white;
+      background-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background-color: #3249c9;
+    }
+
+    .btn-danger {
+      color: white;
+      background-color: var(--danger);
+    }
+
+    /* Media Query for Mobile */
+    @media screen and (max-width: 768px) {
+      .navbar {
+        height: auto;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .logo, .nav-center, .auth-section {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .logo {
+        text-align: center;
+      }
+
+      .auth-section {
+        justify-content: center;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        top: 130px;
+        height: calc(100vh - 130px);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding-top: 140px;
+      }
+
+      .main-content.expanded {
+        margin-left: 0;
+      }
+    }
+
+    /* ===================== DARK THEME OVERRIDES ===================== */
+    :root {
+      --primary: #5b76f7;
+      --secondary: #8b93a7;
+      --success: #2ea043;
+      --danger: #f0556b;
+      --light: #1b1f2b;
+      --dark: #e8eaf0;
+      --background: #0e1016;
+    }
+    body { background: #0e1016 !important; color: #c7ccda !important; }
+
+    /* Navbar */
+    .navbar { background-color: #14171f !important; border-bottom: 1px solid #232838; box-shadow: 0 1px 0 #232838 !important; }
+    .nav-links a { color: #c7ccda !important; }
+    .nav-links a:hover { color: #8fa0ff !important; }
+    .signin-btn { background-color: #5b76f7 !important; color: #fff !important; }
+    .signin-btn:hover { background-color: #6d85ff !important; }
+    .profile-name { color: #e8eaf0 !important; }
+    .profile-pic { border-color: rgba(255,255,255,0.18) !important; }
+
+    /* Sidebar */
+    .sidebar { background-color: #14171f !important; border-right: 1px solid #232838; box-shadow: none !important; }
+    .sidebar-menu-link { color: #c7ccda !important; }
+    .sidebar-menu-link:hover { background-color: rgba(91,118,247,0.12) !important; color: #8fa0ff !important; }
+    .sidebar-menu-link.active { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; border-left-color: #5b76f7 !important; }
+    .sidebar-footer { color: #6e768c !important; border-top-color: #232838 !important; }
+
+    /* Headings & text */
+    .form-title, .settings-name { color: #e8eaf0 !important; }
+    .contact-toggle { color: #8fa0ff !important; }
+    .settings-email, .settings-placeholder, .contact-status { color: #8b93a7 !important; }
+
+    /* Inputs */
+    .contact-textarea {
+      background: #1b1f2b !important;
+      border: 1px solid #2b3140 !important;
+      color: #e8eaf0 !important;
+    }
+    .contact-textarea:focus { border-color: #5b76f7 !important; }
+    .contact-textarea::placeholder { color: #565d70 !important; }
+
+    /* Cards & containers */
+    .form-container {
+      background: #14171f !important;
+      border: 1px solid #232838 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35) !important;
+    }
+
+    /* Buttons */
+    .btn-primary { background-color: #5b76f7 !important; color: #fff !important; }
+    .btn-primary:hover { background-color: #6d85ff !important; }
+    .btn-danger { background-color: #f0556b !important; color: #fff !important; }
+    .btn-danger:hover { background-color: #f5697d !important; }
+
+    /* ============ DC POLISH LAYER (matches Schedule Generator DC) ============ */
+    body {
+      background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, #0e1016 60%) !important;
+      background-attachment: fixed !important;
+    }
+    .form-container {
+      border-radius: 16px !important;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45) !important;
+    }
+    .btn, .btn-primary, .btn-danger, .signin-btn {
+      border-radius: 10px !important;
+      font-weight: 600 !important;
+      transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <!-- Logo section (left) -->
+      <div class="logo">
+        <button class="menu-toggle" id="sidebarToggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        Syncra-Labs
+      </div>
+
+      <!-- Navigation links (center) -->
+      <div class="nav-center">
+        <ul class="nav-links">
+        </ul>
+      </div>
+
+      <!-- Auth section (right) -->
+      <div class="auth-section">
+        <!-- Sign In Button (shown when not authenticated) -->
+        <div class="auth-buttons">
+          <a href="/auth" class="auth-btn signin-btn">Sign In</a>
+        </div>
+
+        <!-- Profile Section (shown when authenticated) -->
+        <div class="profile-section">
+          <span class="profile-name"></span>
+          <img class="profile-pic" src="" alt="Profile" />
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <!-- Workspace section -->
+      <div class="sidebar-section">
+        <ul class="sidebar-menu">
+          <li class="sidebar-menu-item">
+            <a href="/" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              </svg>
+              <span class="sidebar-text">Home</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/teams" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span class="sidebar-text">My Teams</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/files" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span class="sidebar-text">Saved Files</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/team_schedule" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span class="sidebar-text">Team Schedule</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="sidebar-text">Syncra-Labs © 2025</span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <div class="form-container">
+      <h2 class="form-title">Settings</h2>
+
+      <!-- Account info (shown when authenticated) -->
+      <div class="settings-account" id="settingsAccount" style="display: none;">
+        <img class="settings-pic" id="settingsPic" src="" alt="Profile" />
+        <div>
+          <div class="settings-name" id="settingsName"></div>
+          <div class="settings-email" id="settingsEmail"></div>
+        </div>
+      </div>
+
+      <p class="settings-placeholder" id="settingsPlaceholder">More settings are coming soon.</p>
+
+      <!-- Contact form (shown when authenticated) -->
+      <div class="contact-form" id="contactForm" style="display: none;">
+        <span class="contact-toggle" id="contactToggle">Contact Us</span>
+        <div id="contactBox" style="display: none;">
+          <textarea class="contact-textarea" id="contactMessage" placeholder="Describe your problem and we'll get back to you."></textarea>
+          <button class="btn btn-primary" id="contactSendBtn">Send</button>
+        </div>
+        <p class="contact-status" id="contactStatus"></p>
+      </div>
+
+      <a href="/admin" class="btn btn-primary" id="adminBtn" style="display: none; margin-right: 10px;">Admin Page</a>
+      <button class="btn btn-danger" id="signOutBtn" style="display: none;">Sign Out</button>
+    </div>
+  </main>
+
+  <script>
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      sidebar.classList.toggle('show');
+      mainContent.classList.toggle('expanded');
+    });
+
+    // Handle sidebar for mobile
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    }
+
+    // JWT parsing function
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Authentication handling
+    function initializeAuth() {
+      const token = localStorage.getItem("token");
+      const authButtons = document.querySelector(".auth-buttons");
+      const profileSection = document.querySelector(".profile-section");
+      const profilePic = document.querySelector(".profile-pic");
+      const profileName = document.querySelector(".profile-name");
+      const settingsAccount = document.getElementById("settingsAccount");
+      const settingsPic = document.getElementById("settingsPic");
+      const settingsName = document.getElementById("settingsName");
+      const settingsEmail = document.getElementById("settingsEmail");
+      const settingsPlaceholder = document.getElementById("settingsPlaceholder");
+      const signOutBtn = document.getElementById("signOutBtn");
+      const contactForm = document.getElementById("contactForm");
+
+      if (token) {
+        const payload = parseJwt(token);
+
+        if (payload) {
+          authButtons.style.display = "none";
+          profileSection.style.display = "flex";
+          profilePic.src = payload.picture || "https://via.placeholder.com/32";
+          profileName.textContent = payload.name || payload.email || "User";
+
+          // Fill in account details
+          settingsAccount.style.display = "flex";
+          settingsPic.src = payload.picture || "https://via.placeholder.com/56";
+          settingsName.textContent = payload.name || "User";
+          settingsEmail.textContent = payload.email || "";
+          signOutBtn.style.display = "inline-block";
+          contactForm.style.display = "block";
+
+          if (payload.email === "darkiiq8@gmail.com") {
+            document.getElementById("adminBtn").style.display = "inline-block";
+          }
+
+          signOutBtn.addEventListener('click', () => {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+          });
+        } else {
+          authButtons.style.display = "flex";
+          profileSection.style.display = "none";
+          settingsPlaceholder.textContent = "Sign in to manage your account settings.";
+        }
+      } else {
+        authButtons.style.display = "flex";
+        profileSection.style.display = "none";
+        settingsPlaceholder.textContent = "Sign in to manage your account settings.";
+      }
+    }
+
+    // Contact form handling
+    async function sendComplaint() {
+      const token = localStorage.getItem("token");
+      const messageInput = document.getElementById("contactMessage");
+      const sendBtn = document.getElementById("contactSendBtn");
+      const statusText = document.getElementById("contactStatus");
+      const message = messageInput.value.trim();
+
+      if (!message) {
+        statusText.textContent = "Please write a message first.";
+        return;
+      }
+
+      sendBtn.disabled = true;
+      statusText.textContent = "Sending...";
+
+      try {
+        const response = await fetch('/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ message: message })
+        });
+
+        if (response.ok) {
+          messageInput.value = "";
+          document.getElementById("contactBox").style.display = "none";
+          statusText.textContent = "Message sent. Thank you!";
+        } else {
+          statusText.textContent = "Something went wrong. Please try again.";
+        }
+      } catch (e) {
+        statusText.textContent = "Something went wrong. Please try again.";
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeAuth();
+      document.getElementById("contactSendBtn").addEventListener('click', sendComplaint);
+      document.getElementById("contactToggle").addEventListener('click', () => {
+        const contactBox = document.getElementById("contactBox");
+        const isOpen = contactBox.style.display === "block";
+        contactBox.style.display = isOpen ? "none" : "block";
+        document.getElementById("contactStatus").textContent = "";
+      });
+    });
+  </script>
+</body>
+</html>

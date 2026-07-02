@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, #0e1016 60%) #0e1016;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        /* Restricted / fallback card */
+        .restricted-wrap {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-card {
+            width: 100%;
+            max-width: 440px;
+            background: #14171f;
+            border: 1px solid #232838;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+            padding: 36px 32px;
+            text-align: center;
+        }
+
+        .admin-pill {
+            display: inline-block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #ff8295;
+            background: rgba(240,85,107,0.12);
+            border: 1px solid rgba(240,85,107,0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f1f3f8;
+            letter-spacing: -0.01em;
+            margin: 0 0 8px;
+        }
+
+        .admin-hint {
+            font-size: 13.5px;
+            color: #6e768c;
+            margin: 0 0 26px;
+        }
+
+        .admin-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #8b93a7;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 16px;
+            border: 1px solid #2b3140;
+            border-radius: 10px;
+            transition: border-color .18s ease, color .18s ease;
+        }
+        .admin-back:hover { border-color: #3a4255; color: #e8eaf0; }
+
+        /* Dashboard */
+        .dashboard {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 26px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 26px;
+        }
+
+        .stat-tile {
+            flex: 1;
+            min-width: 200px;
+            background: #14171f;
+            border: 1px solid #232838;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+            padding: 22px 24px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6e768c;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f1f3f8;
+            letter-spacing: -0.01em;
+        }
+
+        .messages-card {
+            background: #14171f;
+            border: 1px solid #232838;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+            padding: 24px;
+        }
+
+        .messages-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f1f3f8;
+            margin: 0 0 16px;
+        }
+
+        .message-item {
+            border-top: 1px solid #232838;
+            padding: 14px 2px;
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .message-email {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #8fa0ff;
+        }
+
+        .message-date {
+            font-size: 12.5px;
+            color: #6e768c;
+        }
+
+        .message-text {
+            font-size: 14px;
+            color: #c7ccda;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        .messages-empty {
+            font-size: 13.5px;
+            color: #6e768c;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading / restricted fallback -->
+    <div class="restricted-wrap" id="restrictedWrap">
+        <div class="admin-card" id="restrictedCard" style="display: none;">
+            <div class="admin-pill">403 · Restricted area</div>
+            <h1>wahh how did you get in here!</h1>
+            <p class="admin-hint">This page is for administrators only.</p>
+            <a href="/" class="admin-back">← Take me back</a>
+        </div>
+    </div>
+
+    <!-- Admin dashboard (shown after admin check passes) -->
+    <div class="dashboard" id="dashboard" style="display: none;">
+        <div class="dashboard-header">
+            <h1>Admin Panel</h1>
+            <a href="/settings" class="admin-back">← Back to settings</a>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-tile">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="totalUsers">–</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Messages Received</div>
+                <div class="stat-value" id="totalMessages">–</div>
+            </div>
+        </div>
+
+        <div class="messages-card">
+            <h2 class="messages-title">Messages</h2>
+            <div id="messagesList">
+                <p class="messages-empty">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showRestricted() {
+            document.getElementById("dashboard").style.display = "none";
+            document.getElementById("restrictedWrap").style.display = "flex";
+            document.getElementById("restrictedCard").style.display = "block";
+        }
+
+        function renderMessages(complaints) {
+            const list = document.getElementById("messagesList");
+            list.innerHTML = "";
+
+            if (!complaints.length) {
+                const empty = document.createElement("p");
+                empty.className = "messages-empty";
+                empty.textContent = "No messages yet.";
+                list.appendChild(empty);
+                return;
+            }
+
+            complaints.forEach(c => {
+                const item = document.createElement("div");
+                item.className = "message-item";
+
+                const meta = document.createElement("div");
+                meta.className = "message-meta";
+
+                const email = document.createElement("span");
+                email.className = "message-email";
+                email.textContent = c.user_email || "unknown";
+
+                const date = document.createElement("span");
+                date.className = "message-date";
+                date.textContent = c.created_at ? c.created_at.slice(0, 16) : "";
+
+                meta.appendChild(email);
+                meta.appendChild(date);
+
+                const text = document.createElement("p");
+                text.className = "message-text";
+                text.textContent = c.message;
+
+                item.appendChild(meta);
+                item.appendChild(text);
+                list.appendChild(item);
+            });
+        }
+
+        async function loadAdminData() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                showRestricted();
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin_data', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    showRestricted();
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById("totalUsers").textContent = data.total_users;
+                document.getElementById("totalMessages").textContent = data.complaints.length;
+                renderMessages(data.complaints);
+
+                document.getElementById("restrictedWrap").style.display = "none";
+                document.getElementById("dashboard").style.display = "block";
+            } catch (e) {
+                showRestricted();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAdminData);
+    </script>
+</body>
+</html>

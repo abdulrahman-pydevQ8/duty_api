@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Generator</title>
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #0e1016;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sg-scroll::-webkit-scrollbar { width: 8px; }
+  .sg-scroll::-webkit-scrollbar-thumb { background: #2b3140; border-radius: 8px; }
+
+  .sg-wrap { min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 40px 20px; background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, #0e1016 60%); }
+  .sg-card { width: 100%; max-width: 600px; background: #14171f; border: 1px solid #232838; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+
+  .sg-header { padding: 22px 28px; border-bottom: 1px solid #232838; display: flex; align-items: center; gap: 14px; }
+  .sg-back { color: #8b93a7; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border: 1px solid #2b3140; border-radius: 9px; }
+  .sg-back:hover { border-color: #3a4255; color: #e8eaf0; }
+  .sg-title { font-size: 17px; font-weight: 700; color: #f1f3f8; letter-spacing: -0.01em; }
+  .sg-sub { font-size: 12.5px; color: #6e768c; margin-top: 2px; }
+
+  .sg-body { padding: 28px; }
+
+  .sg-steps { display: flex; align-items: flex-start; margin-bottom: 28px; }
+  .sg-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+  .sg-dot { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: #1b1f2b; color: #6e768c; border: 1px solid #2b3140; }
+  .sg-step.active .sg-dot { background: #5b76f7; color: #fff; border-color: #5b76f7; }
+  .sg-step.done .sg-dot { background: #2ea043; color: #fff; }
+  .sg-step-label { font-size: 11.5px; text-align: center; color: #6e768c; font-weight: 400; }
+  .sg-step.active .sg-step-label { color: #e8eaf0; font-weight: 600; }
+
+  .sg-alert { padding: 12px 14px; border-radius: 10px; margin-bottom: 20px; font-size: 13.5px; }
+  .sg-alert.success { background: rgba(46,160,67,0.12); border: 1px solid rgba(46,160,67,0.4); color: #5fd07a; }
+  .sg-alert.error { background: rgba(240,85,107,0.12); border: 1px solid rgba(240,85,107,0.4); color: #ff8295; }
+
+  .sg-label { display: block; font-size: 13.5px; font-weight: 600; color: #c7ccda; margin-bottom: 8px; }
+  .sg-hint { font-size: 12.5px; color: #6e768c; margin: 7px 0 0; }
+  .sg-input, .sg-select { width: 100%; padding: 12px 14px; background: #1b1f2b; border: 1px solid #2b3140; border-radius: 10px; color: #e8eaf0; font-size: 15px; font-family: inherit; box-sizing: border-box; }
+  .sg-input:focus, .sg-select:focus { border-color: #5b76f7; outline: none; }
+
+  .sg-shift-card { background: #171a23; border: 1px solid #232838; border-radius: 13px; padding: 15px 16px; transition: border-color .18s ease; }
+  .sg-shift-card.on { background: #181d2a; border-color: rgba(91,118,247,0.4); }
+  .sg-track { width: 42px; height: 24px; border-radius: 20px; flex-shrink: 0; background: #343b4d; position: relative; cursor: pointer; transition: background .18s ease; }
+  .sg-track.on { background: #5b76f7; }
+  .sg-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transform: translateX(0); transition: transform .18s ease; }
+  .sg-track.on .sg-knob { transform: translateX(18px); }
+  .sg-pill { font-size: 12.5px; font-weight: 600; color: #8fa0ff; background: rgba(91,118,247,0.12); padding: 4px 10px; border-radius: 20px; }
+  .sg-range { width: 100%; height: 6px; border-radius: 5px; background: #343b4d; outline: none; accent-color: #5b76f7; cursor: pointer; }
+
+  .sg-btn { padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; border: none; }
+  .sg-btn-primary { background: #5b76f7; color: #fff; }
+  .sg-btn-primary:hover { background: #6d85ff; }
+  .sg-btn-ghost { background: transparent; color: #c7ccda; border: 1px solid #2b3140; }
+  .sg-btn-ghost:hover { border-color: #3a4255; }
+  .sg-btn-success { background: #2ea043; color: #fff; }
+  .sg-btn-success:hover { background: #34b14d; }
+
+  .sg-vac-item { display: flex; align-items: center; gap: 12px; background: #1b1f2b; border: 1px solid #232838; border-radius: 11px; padding: 12px 14px; }
+  .sg-vac-del { background: transparent; border: none; color: #6e768c; font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .sg-vac-del:hover { color: #f0556b; }
+  .sg-empty { padding: 26px; text-align: center; color: #565d70; font-size: 13px; border: 1px dashed #232838; border-radius: 11px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="sg-wrap">
+  <div class="sg-card">
+
+    <!-- Header -->
+    <div class="sg-header">
+      <a href="/" class="sg-back">← Back</a>
+      <div style="flex: 1;">
+        <div class="sg-title">Schedule Generator</div>
+        <div class="sg-sub">Step <span id="stepNum">1</span> of 3 · <span id="stepLabel">Staff &amp; shifts</span></div>
+      </div>
+    </div>
+
+    <div class="sg-body">
+
+      <!-- Step indicator -->
+      <div class="sg-steps" id="stepIndicator">
+        <div class="sg-step" data-step="1"><div class="sg-dot">1</div><div class="sg-step-label">Staff &amp; shifts</div></div>
+        <div class="sg-step" data-step="2"><div class="sg-dot">2</div><div class="sg-step-label">Month &amp; holidays</div></div>
+        <div class="sg-step" data-step="3"><div class="sg-dot">3</div><div class="sg-step-label">Vacations</div></div>
+      </div>
+
+      <!-- Alert -->
+      <div id="alertBox" class="sg-alert hidden"></div>
+
+      <!-- ====================== STEP 1 ====================== -->
+      <div id="step1">
+        <div style="margin-bottom: 24px;">
+          <label class="sg-label" for="numEmployees">Number of employees</label>
+          <input class="sg-input" type="number" min="1" id="numEmployees" value="35" />
+          <p class="sg-hint">Total staff to include in the rota.</p>
+        </div>
+
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;">
+          <span style="font-size: 13.5px; font-weight: 600; color: #c7ccda;">Shift types</span>
+          <span style="font-size: 12px; color: #6e768c;">Turn on the shifts you run</span>
+        </div>
+
+        <div id="shiftList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px;"></div>
+
+        <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
+      </div>
+
+      <!-- ====================== STEP 2 ====================== -->
+      <div id="step2" class="hidden">
+        <div style="margin-bottom: 22px;">
+          <label class="sg-label" for="monthSel">Schedule month</label>
+          <select class="sg-select" id="monthSel"></select>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <label class="sg-label" for="holidays">Holidays <span style="color:#6e768c; font-weight:400;">(optional)</span></label>
+          <input class="sg-input" type="text" id="holidays" placeholder="e.g. 2, 3, 15" />
+          <p class="sg-hint">Comma-separated day numbers to mark as holidays.</p>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 28px;">
+          <button class="sg-btn sg-btn-ghost" style="flex: 1;" onclick="SG.prev()">Back</button>
+          <button class="sg-btn sg-btn-primary" style="flex: 2;" onclick="SG.next()">Continue</button>
+        </div>
+      </div>
+
+      <!-- ====================== STEP 3 ====================== -->
+      <div id="step3" class="hidden">
+        <div style="display: grid; grid-template-columns: 1fr 84px 84px auto; gap: 10px; align-items: end; margin-bottom: 8px;">
+          <div>
+            <label class="sg-label" style="font-size: 12.5px; margin-bottom: 7px;" for="selEmp">Employee</label>
+            <select class="sg-select" style="padding: 11px 12px; border-radius: 9px; font-size: 14px;" id="selEmp"></select>
+          </div>
+          <div>
+            <label class="sg-label" style="font-size: 12.5px; margin-bottom: 7px;" for="vacStart">From</label>
+            <input class="sg-input" type="number" min="1" max="31" id="vacStart" style="padding: 11px 8px; border-radius: 9px; font-size: 14px; text-align: center;" />
+          </div>
+          <div>
+            <label class="sg-label" style="font-size: 12.5px; margin-bottom: 7px;" for="vacEnd">To</label>
+            <input class="sg-input" type="number" min="1" max="31" id="vacEnd" style="padding: 11px 8px; border-radius: 9px; font-size: 14px; text-align: center;" />
+          </div>
+          <button onclick="SG.addVacation()" style="padding: 11px 16px; background: rgba(91,118,247,0.14); color: #8fa0ff; border: 1px solid rgba(91,118,247,0.3); border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; height: 41px;">Add</button>
+        </div>
+        <p class="sg-hint" style="margin: 4px 0 18px;">Add vacation day ranges per employee.</p>
+
+        <div style="font-size: 13px; font-weight: 600; color: #c7ccda; margin-bottom: 10px;">Vacations <span style="color:#6e768c; font-weight:400;">(<span id="vacCount">0</span>)</span></div>
+        <div class="sg-scroll" id="vacList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button class="sg-btn sg-btn-ghost" style="flex: 1;" onclick="SG.prev()">Back</button>
+          <button class="sg-btn sg-btn-success" style="flex: 1;" onclick="SG.save()">Save</button>
+          <button class="sg-btn sg-btn-primary" style="flex: 1.4;" onclick="SG.download()">Download</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var state = {
+    step: 1,
+    shifts: [
+      { id: 'night',   label: 'Night shift',   desc: 'Overnight coverage',   enabled: false, staff: 4 },
+      { id: 'pm',      label: 'PM shift',      desc: 'Afternoon & evening',  enabled: true,  staff: 4 },
+      { id: 'weekend', label: 'Weekend shift', desc: 'Saturday & Sunday',    enabled: false, staff: 4 }
+    ],
+    vacations: [],
+    alertTimer: null
+  };
+
+  var stepLabels = { 1: 'Staff & shifts', 2: 'Month & holidays', 3: 'Vacations' };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function flash(type, msg) {
+    var box = $('alertBox');
+    box.className = 'sg-alert ' + type;
+    box.textContent = msg;
+    clearTimeout(state.alertTimer);
+    state.alertTimer = setTimeout(function () { box.className = 'sg-alert hidden'; }, 3200);
+  }
+  function hideAlert() {
+    clearTimeout(state.alertTimer);
+    $('alertBox').className = 'sg-alert hidden';
+  }
+
+  function renderSteps() {
+    $('stepNum').textContent = state.step;
+    $('stepLabel').textContent = stepLabels[state.step];
+    var nodes = $('stepIndicator').children;
+    for (var i = 0; i < nodes.length; i++) {
+      var n = i + 1;
+      nodes[i].className = 'sg-step' + (state.step === n ? ' active' : state.step > n ? ' done' : '');
+      nodes[i].querySelector('.sg-dot').textContent = state.step > n ? '✓' : String(n);
+    }
+    $('step1').className = state.step === 1 ? '' : 'hidden';
+    $('step2').className = state.step === 2 ? '' : 'hidden';
+    $('step3').className = state.step === 3 ? '' : 'hidden';
+  }
+
+  function renderShifts() {
+    var host = $('shiftList');
+    host.innerHTML = '';
+    state.shifts.forEach(function (sh) {
+      var card = document.createElement('div');
+      card.className = 'sg-shift-card' + (sh.enabled ? ' on' : '');
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:14px;';
+
+      var track = document.createElement('div');
+      track.className = 'sg-track' + (sh.enabled ? ' on' : '');
+      track.innerHTML = '<div class="sg-knob"></div>';
+      track.onclick = function () { toggleShift(sh.id); };
+
+      var info = document.createElement('div');
+      info.style.cssText = 'flex:1; cursor:pointer;';
+      info.onclick = function () { toggleShift(sh.id); };
+      info.innerHTML =
+        '<div style="font-size:14.5px; font-weight:600; color:#e8eaf0;"></div>' +
+        '<div style="font-size:12.5px; color:#6e768c; margin-top:1px;"></div>';
+      info.children[0].textContent = sh.label;
+      info.children[1].textContent = sh.desc;
+
+      row.appendChild(track);
+      row.appendChild(info);
+
+      if (sh.enabled) {
+        var pill = document.createElement('div');
+        pill.className = 'sg-pill';
+        pill.textContent = sh.staff + ' staff';
+        row.appendChild(pill);
+      }
+      card.appendChild(row);
+
+      if (sh.enabled) {
+        var panel = document.createElement('div');
+        panel.style.cssText = 'margin-top:16px; padding-top:16px; border-top:1px solid #232838;';
+        panel.innerHTML =
+          '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">' +
+            '<span style="font-size:12.5px; color:#9aa3b8;">Staff per shift</span>' +
+            '<span style="font-size:13px; font-weight:700; color:#e8eaf0;">' + sh.staff + '</span>' +
+          '</div>';
+        var range = document.createElement('input');
+        range.type = 'range'; range.min = 2; range.max = 10; range.value = sh.staff;
+        range.className = 'sg-range';
+        range.oninput = function (e) {
+          sh.staff = parseInt(e.target.value, 10);
+          panel.querySelector('span + span').textContent = sh.staff;
+          var p = card.querySelector('.sg-pill');
+          if (p) p.textContent = sh.staff + ' staff';
+        };
+        panel.appendChild(range);
+        card.appendChild(panel);
+      }
+      host.appendChild(card);
+    });
+  }
+
+  function toggleShift(id) {
+    state.shifts.forEach(function (sh) { if (sh.id === id) sh.enabled = !sh.enabled; });
+    renderShifts();
+  }
+
+  function renderMonths() {
+    var names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var sel = $('monthSel');
+    sel.innerHTML = '';
+    names.forEach(function (name, i) {
+      var o = document.createElement('option');
+      o.value = String(i + 1); o.textContent = name;
+      sel.appendChild(o);
+    });
+    sel.value = String(new Date().getMonth() + 1);
+  }
+
+  function renderEmployees() {
+    var n = parseInt($('numEmployees').value, 10) || 0;
+    var sel = $('selEmp');
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">Select…</option>';
+    for (var i = 1; i <= n; i++) {
+      var o = document.createElement('option');
+      o.value = String(i); o.textContent = 'Employee ' + i;
+      sel.appendChild(o);
+    }
+    sel.value = prev;
+  }
+
+  function renderVacations() {
+    var host = $('vacList');
+    host.innerHTML = '';
+    $('vacCount').textContent = state.vacations.length;
+    if (state.vacations.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'sg-empty';
+      empty.textContent = 'No vacations added yet.';
+      host.appendChild(empty);
+      return;
+    }
+    state.vacations.forEach(function (v, i) {
+      var item = document.createElement('div');
+      item.className = 'sg-vac-item';
+      var pill = document.createElement('div');
+      pill.className = 'sg-pill';
+      pill.style.padding = '4px 11px';
+      pill.textContent = 'Employee ' + v.emp;
+      var range = document.createElement('div');
+      range.style.cssText = 'flex:1; font-size:13.5px; color:#c7ccda;';
+      range.textContent = 'Days ' + v.start + ' – ' + v.end;
+      var del = document.createElement('button');
+      del.className = 'sg-vac-del';
+      del.textContent = '✕';
+      del.onclick = function () { state.vacations.splice(i, 1); renderVacations(); };
+      item.appendChild(pill); item.appendChild(range); item.appendChild(del);
+      host.appendChild(item);
+    });
+  }
+
+  window.SG = {
+    next: function () {
+      if (state.step === 1) {
+        var n = parseInt($('numEmployees').value, 10);
+        if (!n || n < 1) { flash('error', 'Enter a valid number of employees.'); return; }
+      }
+      state.step = Math.min(3, state.step + 1);
+      hideAlert();
+      if (state.step === 3) renderEmployees();
+      renderSteps();
+    },
+    prev: function () {
+      state.step = Math.max(1, state.step - 1);
+      hideAlert();
+      renderSteps();
+    },
+    addVacation: function () {
+      var emp = $('selEmp').value;
+      var start = parseInt($('vacStart').value, 10);
+      var end = parseInt($('vacEnd').value, 10);
+      if (!emp) { flash('error', 'Select an employee first.'); return; }
+      if (isNaN(start) || start < 1) { flash('error', 'Enter a valid start day.'); return; }
+      if (isNaN(end) || end < start) { flash('error', 'End day must be on or after the start day.'); return; }
+      state.vacations.push({ emp: emp, start: start, end: end });
+      $('selEmp').value = ''; $('vacStart').value = ''; $('vacEnd').value = '';
+      flash('success', 'Vacation added.');
+      renderVacations();
+    },
+    save: function () { flash('success', 'Schedule generated and saved.'); },
+    download: function () { flash('success', 'Schedule downloaded.'); }
+  };
+
+  renderSteps();
+  renderShifts();
+  renderMonths();
+  renderVacations();
+})();
+</script>
+</body>
+</html>

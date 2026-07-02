@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Syncra-Labs</title>
+  <style>
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Colors and variables */
+    :root {
+      --primary: #5b76f7;
+      --secondary: #6c757d;
+      --success: #28a745;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --background: #f5f7fa;
+      --sidebar-width: 250px;
+      --sidebar-collapsed-width: 70px;
+      --transition-speed: 0.3s;
+    }
+
+    /* Base styles */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background: var(--background);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      background-color: var(--dark);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    /* Logo section */
+    .logo {
+      color: white;
+      font-weight: bold;
+      font-size: 1.3rem;
+      text-decoration: none;
+      width: 33%;
+      display: flex;
+      align-items: center;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      margin-left: -6px;
+      margin-right: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .menu-toggle:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Center navigation section */
+    .nav-center {
+      width: 34%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links li {
+      margin: 0 15px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: #b3b3b3;
+    }
+
+    /* Auth buttons section */
+    .auth-section {
+      width: 33%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1;
+      transition: all 0.2s ease;
+    }
+
+    .signin-btn {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .signin-btn:hover {
+      background-color: #3249c9;
+    }
+
+    /* Profile section */
+    .profile-section {
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: border-color 0.2s ease;
+    }
+
+    .profile-pic:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .profile-name {
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 60px;
+      height: calc(100vh - 60px);
+      width: var(--sidebar-width);
+      background-color: white;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform var(--transition-speed), width var(--transition-speed);
+      z-index: 900;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .sidebar-content {
+      padding: 20px 0;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+    }
+
+    .sidebar-section-title {
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--secondary);
+      font-weight: bold;
+      transition: opacity var(--transition-speed), height var(--transition-speed), padding var(--transition-speed);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu-item {
+      margin: 5px 0;
+    }
+
+    .sidebar-menu-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px 12px 17px;
+      color: var(--dark);
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-menu-link:hover {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+    }
+
+    .sidebar-menu-link.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+      border-left: 3px solid var(--primary);
+    }
+
+    .sidebar-icon {
+      font-size: 1.2rem;
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 3px;
+    }
+
+    .sidebar-text {
+      margin-left: 15px;
+      transition: opacity var(--transition-speed), width var(--transition-speed);
+      white-space: nowrap;
+    }
+
+    .collapsed .sidebar-menu-link {
+      padding-left: 20px;
+    }
+
+    .collapsed .sidebar-menu-link.active {
+      border-left: 3px solid var(--primary);
+      padding-left: 17px;
+    }
+
+    .collapsed .sidebar-text {
+      opacity: 0;
+      width: 0;
+      margin-left: 0;
+      overflow: hidden;
+    }
+
+    .collapsed .sidebar-section-title {
+      opacity: 0;
+      height: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-footer {
+      padding: 15px 20px;
+      border-top: 1px solid #eee;
+      font-size: 0.85rem;
+      color: var(--secondary);
+      transition: opacity var(--transition-speed);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .collapsed .sidebar-footer {
+      opacity: 0;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding-top: 60px;
+      min-height: 100vh;
+      transition: margin-left var(--transition-speed);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: max(80px, 15vh) 20px 20px 20px;
+    }
+
+    .main-content.expanded {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+
+    /* Empty Teams State */
+    .empty-teams-state {
+      text-align: center;
+      padding: 40px 20px;
+
+    }
+
+    .empty-icon {
+      font-size: 5rem;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .empty-title {
+      font-size: 1.8rem;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+
+    .empty-description {
+      font-size: 1rem;
+      color: var(--secondary);
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: inline-block;
+      font-weight: 500;
+      text-align: center;
+      padding: 12px 30px;
+      font-size: 1rem;
+      line-height: 1.5;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+      border: none;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .btn-primary {
+      color: white;
+      background-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background-color: #3249c9;
+    }
+
+    /* Media Query for Mobile */
+    @media screen and (max-width: 768px) {
+      .navbar {
+        height: auto;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .logo, .nav-center, .auth-section {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .logo {
+        text-align: center;
+      }
+
+      .auth-section {
+        justify-content: center;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        top: 130px;
+        height: calc(100vh - 130px);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding-top: 140px;
+      }
+
+      .main-content.expanded {
+        margin-left: 0;
+      }
+    }
+
+    /* ===================== DARK THEME OVERRIDES ===================== */
+    :root {
+      --primary: #5b76f7;
+      --secondary: #8b93a7;
+      --success: #2ea043;
+      --danger: #f0556b;
+      --light: #1b1f2b;
+      --dark: #e8eaf0;
+      --background: #0e1016;
+    }
+    body { background: #0e1016 !important; color: #c7ccda !important; }
+
+    /* Navbar */
+    .navbar { background-color: #14171f !important; border-bottom: 1px solid #232838; box-shadow: 0 1px 0 #232838 !important; }
+    .nav-links a { color: #c7ccda !important; }
+    .nav-links a:hover { color: #8fa0ff !important; }
+    .signin-btn { background-color: #5b76f7 !important; color: #fff !important; }
+    .signin-btn:hover { background-color: #6d85ff !important; }
+    .profile-name { color: #e8eaf0 !important; }
+    .profile-pic { border-color: rgba(255,255,255,0.18) !important; }
+
+    /* Sidebar */
+    .sidebar { background-color: #14171f !important; border-right: 1px solid #232838; box-shadow: none !important; }
+    .sidebar-menu-link { color: #c7ccda !important; }
+    .sidebar-menu-link:hover { background-color: rgba(91,118,247,0.12) !important; color: #8fa0ff !important; }
+    .sidebar-menu-link.active { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; border-left-color: #5b76f7 !important; }
+    .sidebar-section-title { color: #6e768c !important; }
+    .sidebar-footer { color: #6e768c !important; border-top-color: #232838 !important; }
+
+    /* Headings & text */
+    .empty-title, .teams-title, .files-title, .form-title, .team-title, .team-name,
+    .file-name, .schedule-title, .modal-title, .employee-name, .form-label,
+    .app-header h1 { color: #e8eaf0 !important; }
+    .empty-message, .team-meta, .file-details, .employee-meta, .help-text,
+    .no-matches, .step-label { color: #8b93a7 !important; }
+
+    /* Cards & containers */
+    .team-card, .file-item, .form-container, .schedule-container, .team-header,
+    .app-container, .modal-content {
+      background: #14171f !important;
+      border: 1px solid #232838 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35) !important;
+    }
+    .team-card:hover, .file-item:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+      border-color: #2b3140 !important;
+    }
+
+    /* Inputs */
+    .form-input, .form-control, .control-input {
+      background: #1b1f2b !important;
+      border: 1px solid #2b3140 !important;
+      color: #e8eaf0 !important;
+    }
+    .form-input:focus, .form-control:focus { border-color: #5b76f7 !important; }
+    .form-input::placeholder, .form-control::placeholder { color: #565d70 !important; }
+    select.form-input option, select.form-control option { background: #1b1f2b; color: #e8eaf0; }
+
+    /* Buttons */
+    .btn-primary { background-color: #5b76f7 !important; color: #fff !important; }
+    .btn-primary:hover { background-color: #6d85ff !important; }
+    .btn-success { background-color: #2ea043 !important; color: #fff !important; }
+    .btn-success:hover { background-color: #34b14d !important; }
+    .btn-danger { background-color: #f0556b !important; color: #fff !important; }
+    .btn-danger:hover { background-color: #f5697d !important; }
+    .btn-secondary { background-color: #232838 !important; color: #c7ccda !important; }
+    .btn-secondary:hover { background-color: #2b3140 !important; }
+
+    /* Schedule wizard */
+    .app-header { background: #1b2030 !important; border-bottom: 1px solid #232838; }
+    .app-header h1, .app-header .back-link { color: #e8eaf0 !important; }
+    .step-number { background-color: #1b1f2b !important; color: #6e768c !important; border: 1px solid #2b3140; }
+    .step.active .step-number { background-color: #5b76f7 !important; color: #fff !important; border-color: #5b76f7; }
+    .step.completed .step-number { background-color: #2ea043 !important; color: #fff !important; border-color: #2ea043; }
+    .step.active .step-label { color: #8fa0ff !important; }
+
+    /* Alerts */
+    .alert-danger { background-color: rgba(240,85,107,0.12) !important; border: 1px solid rgba(240,85,107,0.4) !important; color: #ff8295 !important; }
+    .alert-success { background-color: rgba(46,160,67,0.12) !important; border: 1px solid rgba(46,160,67,0.4) !important; color: #5fd07a !important; }
+
+    /* Sliders */
+    .slider { background: #2b3140 !important; }
+    .slider::-webkit-slider-thumb { background: #5b76f7 !important; }
+    .slider::-moz-range-thumb { background: #5b76f7 !important; }
+
+    /* Vacation cards & badges */
+    .vacation-card { background-color: #1b1f2b !important; border: 1px solid #232838; }
+    .employee-badge { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; }
+    .delete-btn { color: #f0556b !important; }
+
+    /* Members page */
+    .schedule-header { border-bottom-color: #232838 !important; }
+    .employee-row { border-bottom-color: #232838 !important; }
+    .employee-row:hover { background-color: rgba(91,118,247,0.05) !important; }
+    .role-leader { background-color: rgba(91,118,247,0.16) !important; color: #9db0ff !important; }
+    .role-new { background-color: #232838 !important; color: #9aa3b8 !important; }
+    .modal-header { border-bottom-color: #232838 !important; }
+    .modal-footer { border-top-color: #232838 !important; }
+    .modal-close { color: #8b93a7 !important; }
+    .modal-close:hover { background-color: #232838 !important; }
+    .back-link { color: #8fa0ff !important; }
+
+    /* File icon */
+    .file-icon { background-color: rgba(91,118,247,0.14) !important; color: #8fa0ff !important; }
+
+
+    /* ============ DC POLISH LAYER (matches Schedule Generator DC) ============ */
+    body {
+      background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, #0e1016 60%) !important;
+      background-attachment: fixed !important;
+    }
+    /* Card surfaces: rounded + soft deep shadow */
+    .app-container, .form-container, .content-container, .schedule-container,
+    .team-header, .modal-content {
+      border-radius: 16px !important;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45) !important;
+    }
+    .team-card, .file-item {
+      border-radius: 14px !important;
+    }
+    .team-card:hover, .file-item:hover {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    }
+    /* Inputs: 10px radius, comfortable padding, crisp focus ring */
+    .form-input, .form-control, .control-input, select.form-input, select.form-control {
+      border-radius: 10px !important;
+      padding: 12px 14px !important;
+    }
+    .form-input:focus, .form-control:focus, .control-input:focus {
+      border-color: #5b76f7 !important;
+      box-shadow: 0 0 0 3px rgba(91,118,247,0.18) !important;
+      outline: none !important;
+    }
+    /* Buttons: 10px radius, weight + smooth hover */
+    .btn, .btn-primary, .btn-secondary, .btn-success, .btn-danger,
+    .signin-btn, button[type="submit"] {
+      border-radius: 10px !important;
+      font-weight: 600 !important;
+      transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+    }
+    /* Wizard header: subtle elevated band like the DC */
+    .app-header { background: #1b2030 !important; }
+    /* Step pills spacing parity */
+    .step-number { font-weight: 700 !important; }
+
+
+    /* ===== DC-style selects (custom caret, dark) ===== */
+    select.form-control, select.form-input, select.control-input {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%238b93a7' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 14px center !important;
+      padding-right: 38px !important;
+      cursor: pointer !important;
+    }
+    select.form-control option, select.form-input option, select.control-input option {
+      background: #1b1f2b;
+      color: #e8eaf0;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <!-- Logo section (left) -->
+      <div class="logo">
+        <button class="menu-toggle" id="sidebarToggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        Syncra-Labs
+      </div>
+
+      <!-- Navigation links (center) -->
+      <div class="nav-center">
+        <ul class="nav-links">
+        </ul>
+      </div>
+
+      <!-- Auth section (right) -->
+      <div class="auth-section">
+        <!-- Sign In Button (shown when not authenticated) -->
+        <div class="auth-buttons">
+          <a href="/auth" class="auth-btn signin-btn">Sign In</a>
+        </div>
+
+        <!-- Profile Section (shown when authenticated) -->
+        <div class="profile-section">
+          <span class="profile-name"></span>
+          <img class="profile-pic" src="" alt="Profile" />
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <!-- Workspace section -->
+      <div class="sidebar-section">
+        <ul class="sidebar-menu">
+          <li class="sidebar-menu-item">
+            <a href="/" class="sidebar-menu-link active">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              </svg>
+              <span class="sidebar-text">Home</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/teams" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span class="sidebar-text">My Teams</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/files" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span class="sidebar-text">Saved Files</span>
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a href="/team_schedule" class="sidebar-menu-link">
+              <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span class="sidebar-text">Team Schedule</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="sidebar-text">Syncra-Labs © 2025</span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <!-- Home State -->
+    <div class="empty-teams-state">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#5b76f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <path d="M8 14h.01"></path>
+          <path d="M12 14h.01"></path>
+          <path d="M16 14h.01"></path>
+          <path d="M8 18h.01"></path>
+          <path d="M12 18h.01"></path>
+          <path d="M16 18h.01"></path>
+        </svg>
+      </div>
+      <h2 class="empty-title">Shift Scheduler</h2>
+      <p class="empty-description">Create and organize team schedules efficiently</p>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+        <a href="/d" class="btn btn-primary">Manual Schedule</a>
+        <a href="/team_schedule" class="btn btn-primary" style="background-color:#2ea043;">Team Schedule</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    //this line here is very important for testing
+    //window.addEventListener("load", () => {localStorage.clear();});
+
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      sidebar.classList.toggle('show');
+      mainContent.classList.toggle('expanded');
+    });
+
+    // Handle sidebar for mobile
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    }
+
+    // JWT parsing function
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Authentication handling
+    function initializeAuth() {
+      const token = localStorage.getItem("token");
+      const authButtons = document.querySelector(".auth-buttons");
+      const profileSection = document.querySelector(".profile-section");
+      const profilePic = document.querySelector(".profile-pic");
+      const profileName = document.querySelector(".profile-name");
+
+      if (token) {
+        const payload = parseJwt(token);
+
+        if (payload) {
+          authButtons.style.display = "none";
+          profileSection.style.display = "flex";
+          profilePic.src = payload.picture || "https://via.placeholder.com/32";
+          profileName.textContent = payload.name || payload.email || "User";
+
+          profilePic.addEventListener('click', () => {
+            window.location.href = '/settings';
+          });
+        } else {
+          authButtons.style.display = "flex";
+          profileSection.style.display = "none";
+        }
+      } else {
+        authButtons.style.display = "flex";
+        profileSection.style.display = "none";
+      }
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeAuth();
+    });
+  </script>
+</body>
+</html>

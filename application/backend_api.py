@@ -81,6 +81,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 # creating the data base tables
 create_table()
+create_teams_table()
+create_members_table()
+create_complaints_table()
 create_file_table()
 
 app = FastAPI()

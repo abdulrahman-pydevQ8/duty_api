@@ -569,7 +569,7 @@
         <!-- Profile Section (shown when authenticated) -->
         <div class="profile-section">
           <span class="profile-name"></span>
-          <img class="profile-pic" src="" alt="Profile" />
+          <img class="profile-pic" src="" alt="Profile" referrerpolicy="no-referrer" />
         </div>
       </div>
     </div>
@@ -635,7 +635,7 @@
 
       <!-- Account info (shown when authenticated) -->
       <div class="settings-account" id="settingsAccount" style="display: none;">
-        <img class="settings-pic" id="settingsPic" src="" alt="Profile" />
+        <img class="settings-pic" id="settingsPic" src="" alt="Profile" referrerpolicy="no-referrer" />
         <div>
           <div class="settings-name" id="settingsName"></div>
           <div class="settings-email" id="settingsEmail"></div>
@@ -713,12 +713,12 @@
         if (payload) {
           authButtons.style.display = "none";
           profileSection.style.display = "flex";
-          profilePic.src = payload.picture || "https://via.placeholder.com/32";
+          profilePic.src = payload.picture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%232b3140'/%3E%3Ccircle cx='32' cy='25' r='11' fill='%238b93a7'/%3E%3Cpath d='M10 56c3-12 12-17 22-17s19 5 22 17a32 32 0 0 1-44 0z' fill='%238b93a7'/%3E%3C/svg%3E";
           profileName.textContent = payload.name || payload.email || "User";
 
           // Fill in account details
           settingsAccount.style.display = "flex";
-          settingsPic.src = payload.picture || "https://via.placeholder.com/56";
+          settingsPic.src = payload.picture || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%232b3140'/%3E%3Ccircle cx='32' cy='25' r='11' fill='%238b93a7'/%3E%3Cpath d='M10 56c3-12 12-17 22-17s19 5 22 17a32 32 0 0 1-44 0z' fill='%238b93a7'/%3E%3C/svg%3E";
           settingsName.textContent = payload.name || "User";
           settingsEmail.textContent = payload.email || "";
           signOutBtn.style.display = "inline-block";

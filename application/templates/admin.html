@@ -203,6 +203,13 @@
             </div>
         </div>
 
+        <div class="messages-card" style="margin-bottom: 26px;">
+            <h2 class="messages-title">Users</h2>
+            <div id="usersList">
+                <p class="messages-empty">Loading...</p>
+            </div>
+        </div>
+
         <div class="messages-card">
             <h2 class="messages-title">Messages</h2>
             <div id="messagesList">
@@ -216,6 +223,41 @@
             document.getElementById("dashboard").style.display = "none";
             document.getElementById("restrictedWrap").style.display = "flex";
             document.getElementById("restrictedCard").style.display = "block";
+        }
+
+        function renderUsers(users) {
+            const list = document.getElementById("usersList");
+            list.innerHTML = "";
+
+            if (!users.length) {
+                const empty = document.createElement("p");
+                empty.className = "messages-empty";
+                empty.textContent = "No users yet.";
+                list.appendChild(empty);
+                return;
+            }
+
+            users.forEach(u => {
+                const item = document.createElement("div");
+                item.className = "message-item";
+
+                const meta = document.createElement("div");
+                meta.className = "message-meta";
+
+                const email = document.createElement("span");
+                email.className = "message-email";
+                email.textContent = u.email || "unknown";
+
+                const name = document.createElement("span");
+                name.className = "message-date";
+                name.textContent = u.name || "";
+
+                meta.appendChild(email);
+                meta.appendChild(name);
+
+                item.appendChild(meta);
+                list.appendChild(item);
+            });
         }
 
         function renderMessages(complaints) {
@@ -278,6 +320,7 @@
                 const data = await response.json();
                 document.getElementById("totalUsers").textContent = data.total_users;
                 document.getElementById("totalMessages").textContent = data.complaints.length;
+                renderUsers(data.users || []);
                 renderMessages(data.complaints);
 
                 document.getElementById("restrictedWrap").style.display = "none";

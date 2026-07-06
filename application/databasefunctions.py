@@ -265,6 +265,24 @@ def count_users():
         db_pool.putconn(conn)
 
 
+def get_all_users():
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, email FROM users ORDER BY id;")
+        results = cursor.fetchall()
+        cursor.close()
+        return [
+            {
+                "name": row[0],
+                "email": row[1],
+            }
+            for row in results
+        ]
+    finally:
+        db_pool.putconn(conn)
+
+
 def get_all_complaints():
     conn = db_pool.getconn()
     try:

@@ -539,6 +539,7 @@ async def admin_data(admin: dict = Depends(get_current_admin)):
     create_complaints_table()
     return {
         "total_users": count_users(),
+        "users": get_all_users(),
         "complaints": get_all_complaints()
     }
 

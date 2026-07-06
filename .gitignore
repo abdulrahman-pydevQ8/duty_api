@@ -1,0 +1,9 @@
+# Local dev environment — never committed
+.venv/
+.idea/
+.env
+__pycache__/
+*.pyc
+
+# Temporary tools and test files
+scratch/

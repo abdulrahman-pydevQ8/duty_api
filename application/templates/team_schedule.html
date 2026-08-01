@@ -315,6 +315,13 @@
     .shift-card.on .shift-card-body { display:block; }
     .slider-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
     .slider-row-label { font-size:0.82rem; color:#9aa3b8; }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+    input[type="number"] { -moz-appearance:textfield; }
+    .stepper { display:flex; align-items:center; border:1px solid #2b3140; border-radius:9px; overflow:hidden; background:#1b1f2b; }
+    .stepper button { width:30px; height:30px; background:transparent; border:none; color:#8b93a7; font-size:15px; cursor:pointer; line-height:1; font-family:inherit; }
+    .stepper button:hover { background:#232a3d; color:#e8eaf0; }
+    .stepper input { width:40px; height:30px; background:transparent; border:none; text-align:center; color:#e8eaf0; font-size:0.85rem; font-weight:600; padding:0; font-family:inherit; }
+    .stepper input:focus { outline:none; }
     .slider-row .slider-value { color:#e8eaf0; font-weight:700; }
     .shift-card .slider { margin-right:0; }
     .title-sub { font-size:0.95rem; color:#8b93a7; margin:-8px 0 24px; }
@@ -489,6 +496,14 @@
                   <span class="slider-value" id="nightShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="nightShiftSlider">
+                <div class="slider-row" style="margin-top:14px;">
+                  <span class="slider-row-label">Hours per shift</span>
+                  <div class="stepper">
+                    <button type="button" onclick="bump('nightHours', -1)">−</button>
+                    <input type="number" min="1" max="24" value="8" id="nightHours">
+                    <button type="button" onclick="bump('nightHours', 1)">+</button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -510,6 +525,14 @@
                   <span class="slider-value" id="pmShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="pmShiftSlider">
+                <div class="slider-row" style="margin-top:14px;">
+                  <span class="slider-row-label">Hours per shift</span>
+                  <div class="stepper">
+                    <button type="button" onclick="bump('pmHours', -1)">−</button>
+                    <input type="number" min="1" max="24" value="8" id="pmHours">
+                    <button type="button" onclick="bump('pmHours', 1)">+</button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -531,8 +554,38 @@
                   <span class="slider-value" id="weekendShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="weekendShiftSlider">
+                <div class="slider-row" style="margin-top:14px;">
+                  <span class="slider-row-label">Hours per shift</span>
+                  <div class="stepper">
+                    <button type="button" onclick="bump('weekendHours', -1)">−</button>
+                    <input type="number" min="1" max="24" value="8" id="weekendHours">
+                    <button type="button" onclick="bump('weekendHours', 1)">+</button>
+                  </div>
+                </div>
+                <div class="slider-row" style="margin-top:14px;">
+                  <span class="slider-row-label">N shift hours (weekend)</span>
+                  <div class="stepper">
+                    <button type="button" onclick="bump('weekendNHours', -1)">−</button>
+                    <input type="number" min="1" max="24" value="8" id="weekendNHours">
+                    <button type="button" onclick="bump('weekendNHours', 1)">+</button>
+                  </div>
+                </div>
+                <div class="slider-row" style="margin-top:14px;">
+                  <span class="slider-row-label">PM shift hours (weekend)</span>
+                  <div class="stepper">
+                    <button type="button" onclick="bump('weekendPmHours', -1)">−</button>
+                    <input type="number" min="1" max="24" value="8" id="weekendPmHours">
+                    <button type="button" onclick="bump('weekendPmHours', 1)">+</button>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label for="maxMonthHours">Max hours per employee per month (optional)</label>
+            <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160">
+            <p class="help-text">No employee will be scheduled past this total. Leave empty for no limit</p>
           </div>
 
           <div class="btn-group">
@@ -591,6 +644,11 @@
     const nightShiftValue  = document.getElementById('nightShiftValue');
     const pmShiftValue     = document.getElementById('pmShiftValue');
     const weekendShiftValue = document.getElementById('weekendShiftValue');
+    const nightHours   = document.getElementById('nightHours');
+    const pmHours      = document.getElementById('pmHours');
+    const weekendHours = document.getElementById('weekendHours');
+    const weekendNHours  = document.getElementById('weekendNHours');
+    const weekendPmHours = document.getElementById('weekendPmHours');
     const monthSelect      = document.getElementById('monthStep');
     const errorAlert       = document.getElementById('errorAlert');
     const successAlert     = document.getElementById('successAlert');
@@ -606,6 +664,14 @@
     nightShiftSlider.addEventListener('input', () => nightShiftValue.textContent = nightShiftSlider.value);
     pmShiftSlider.addEventListener('input',    () => pmShiftValue.textContent    = pmShiftSlider.value);
     weekendShiftSlider.addEventListener('input',() => weekendShiftValue.textContent = weekendShiftSlider.value);
+
+    // ── Stepper buttons ────────────────────────────────────────────────────
+    function bump(id, d) {
+      const inp = document.getElementById(id);
+      const min = parseInt(inp.min) || 1;
+      const max = parseInt(inp.max) || 24;
+      inp.value = Math.min(max, Math.max(min, (parseInt(inp.value) || min) + d));
+    }
 
     // ── JWT helpers ────────────────────────────────────────────────────────
     function parseJwt(token) {
@@ -743,6 +809,15 @@
           parseInt(pmShiftSlider.value),
           parseInt(weekendShiftSlider.value),
         ],
+        hours_per_shift: [
+          parseInt(nightHours.value) || 8,
+          parseInt(pmHours.value) || 8,
+          parseInt(weekendHours.value) || 8,
+        ],
+        max_month_hours: parseInt(document.getElementById('maxMonthHours').value) || 0,
+        weekend_hours: document.getElementById('includeWeekendShift').checked
+          ? [parseInt(weekendNHours.value) || 8, parseInt(weekendPmHours.value) || 8]
+          : [],
         holi:   holidays ? holidays.split(',').map(h => h.trim()).filter(Boolean) : [],
         monthh: parseInt(monthSelect.value),
         down:   'down',

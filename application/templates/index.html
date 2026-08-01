@@ -64,6 +64,14 @@
   .sg-vac-del:hover { color: #f0556b; }
   .sg-empty { padding: 26px; text-align: center; color: #565d70; font-size: 13px; border: 1px dashed #232838; border-radius: 11px; }
 
+  input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+  .sg-stepper { display: flex; align-items: center; border: 1px solid #2b3140; border-radius: 9px; overflow: hidden; background: #1b1f2b; }
+  .sg-stepper button { width: 30px; height: 30px; background: transparent; border: none; color: #8b93a7; font-size: 15px; cursor: pointer; line-height: 1; font-family: inherit; }
+  .sg-stepper button:hover { background: #232a3d; color: #e8eaf0; }
+  .sg-stepper input { width: 40px; height: 30px; background: transparent; border: none; text-align: center; color: #e8eaf0; font-size: 13.5px; font-weight: 600; padding: 0; font-family: inherit; }
+  .sg-stepper input:focus { outline: none; }
+
   .hidden { display: none !important; }
 </style>
 </head>
@@ -107,6 +115,12 @@
         </div>
 
         <div id="shiftList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px;"></div>
+
+        <div style="margin-bottom: 8px;">
+          <label class="sg-label" for="maxMonthHours">Max hours per employee <span style="color:#6e768c; font-weight:400;">(per month, optional)</span></label>
+          <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" />
+          <p class="sg-hint">No employee will be scheduled past this total. Leave empty for no limit.</p>
+        </div>
 
         <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
       </div>
@@ -166,10 +180,11 @@
   var state = {
     step: 1,
     shifts: [
-      { id: 'night',   label: 'Night shift',   desc: 'Overnight coverage',   enabled: false, staff: 4 },
-      { id: 'pm',      label: 'PM shift',      desc: 'Afternoon & evening',  enabled: true,  staff: 4 },
-      { id: 'weekend', label: 'Weekend shift', desc: 'Saturday & Sunday',    enabled: false, staff: 4 }
+      { id: 'night',   label: 'Night shift',   desc: 'Overnight coverage',   enabled: false, staff: 4, hours: 8 },
+      { id: 'pm',      label: 'PM shift',      desc: 'Afternoon & evening',  enabled: true,  staff: 4, hours: 8 },
+      { id: 'weekend', label: 'Weekend shift', desc: 'Saturday & Sunday',    enabled: false, staff: 4, hours: 8 }
     ],
+    weekendHours: { n: 8, pm: 8 },
     vacations: [],
     alertTimer: null
   };
@@ -201,6 +216,32 @@
     $('step1').className = state.step === 1 ? '' : 'hidden';
     $('step2').className = state.step === 2 ? '' : 'hidden';
     $('step3').className = state.step === 3 ? '' : 'hidden';
+  }
+
+  function numRow(labelText, value, onChange) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-top:14px;';
+    row.innerHTML = '<span style="font-size:12.5px; color:#9aa3b8;"></span>';
+    row.children[0].textContent = labelText;
+    var box = document.createElement('div');
+    box.className = 'sg-stepper';
+    var minus = document.createElement('button');
+    minus.type = 'button'; minus.textContent = '−';
+    var inp = document.createElement('input');
+    inp.type = 'number'; inp.min = 1; inp.max = 24; inp.value = value;
+    var plus = document.createElement('button');
+    plus.type = 'button'; plus.textContent = '+';
+    function set(v) {
+      v = Math.max(1, Math.min(24, v));
+      inp.value = v;
+      onChange(v);
+    }
+    minus.onclick = function () { set((parseInt(inp.value, 10) || 1) - 1); };
+    plus.onclick = function () { set((parseInt(inp.value, 10) || 1) + 1); };
+    inp.oninput = function () { onChange(parseInt(inp.value, 10) || 0); };
+    box.appendChild(minus); box.appendChild(inp); box.appendChild(plus);
+    row.appendChild(box);
+    return row;
   }
 
   function renderShifts() {
@@ -244,18 +285,24 @@
         panel.innerHTML =
           '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">' +
             '<span style="font-size:12.5px; color:#9aa3b8;">Staff per shift</span>' +
-            '<span style="font-size:13px; font-weight:700; color:#e8eaf0;">' + sh.staff + '</span>' +
+            '<span id="staffVal" style="font-size:13px; font-weight:700; color:#e8eaf0;">' + sh.staff + '</span>' +
           '</div>';
         var range = document.createElement('input');
         range.type = 'range'; range.min = 2; range.max = 10; range.value = sh.staff;
         range.className = 'sg-range';
         range.oninput = function (e) {
           sh.staff = parseInt(e.target.value, 10);
-          panel.querySelector('span + span').textContent = sh.staff;
+          panel.querySelector('#staffVal').textContent = sh.staff;
           var p = card.querySelector('.sg-pill');
           if (p) p.textContent = sh.staff + ' staff';
         };
         panel.appendChild(range);
+
+        panel.appendChild(numRow('Hours per shift', sh.hours, function (v) { sh.hours = v; }));
+        if (sh.id === 'weekend') {
+          panel.appendChild(numRow('N shift hours (weekend)', state.weekendHours.n, function (v) { state.weekendHours.n = v; }));
+          panel.appendChild(numRow('PM shift hours (weekend)', state.weekendHours.pm, function (v) { state.weekendHours.pm = v; }));
+        }
         card.appendChild(panel);
       }
       host.appendChild(card);
@@ -343,6 +390,9 @@
       e_num: parseInt($('numEmployees').value, 10),
       include_shift: state.shifts.map(function (sh) { return sh.enabled ? 1 : 0; }),
       emp_per_shift: state.shifts.map(function (sh) { return sh.staff; }),
+      hours_per_shift: state.shifts.map(function (sh) { return sh.hours; }),
+      max_month_hours: parseInt($('maxMonthHours').value, 10) || 0,
+      weekend_hours: state.shifts[2].enabled ? [state.weekendHours.n, state.weekendHours.pm] : [],
       holi: holidays ? holidays.split(',').map(function (h) { return h.trim(); }).filter(Boolean) : [],
       monthh: parseInt($('monthSel').value, 10),
       vac: vac,

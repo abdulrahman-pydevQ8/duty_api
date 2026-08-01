@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 
 
 class Eframe:
-    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None):
+    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None, hours_per_shift=None, max_month_hours=0, weekend_hours=None):
         global name, N, index, selection_counts, month_name, excel_file
         self.main_keys = main_keys.copy()
         self.WK_dic = copy.deepcopy(main_dic)
@@ -20,11 +20,35 @@ class Eframe:
         self.main_keys_days = main_keys_days
         self.week_end = week_end
         self.leaders = leaders or []
+        self.hours_per_shift = hours_per_shift or [8, 8, 8]
+        # [N, PM] hours on weekend days; falls back to the weekday hours
+        self.weekend_hours = weekend_hours if weekend_hours else [self.hours_per_shift[0], self.hours_per_shift[1]]
+        self.max_month_hours = max_month_hours or 0  # 0 = no cap
+        self.hours_used = {n: 0 for n in name_list}
+        self._we_set = {str(w) for w in self.week_end}
+        global selection_counts
+        shuffled = self.names.copy()
+        random.shuffle(shuffled)
+        selection_counts = {n: 0 for n in shuffled}  # shared across the WK/N/PM passes
+
+    def _shift_hours(self, shift_idx, day):
+        # N (0) and PM (1) run different hours when the day is a weekend/holiday
+        if shift_idx in (0, 1) and str(day) in self._we_set:
+            return self.weekend_hours[shift_idx]
+        return self.hours_per_shift[shift_idx]
+
+    def _hours_ok(self, name, shift_idx, day):
+        # True if assigning this shift keeps the employee within the monthly hours cap
+        if not self.max_month_hours:
+            return True
+        return self.hours_used[name] + self._shift_hours(shift_idx, day) <= self.max_month_hours
 
     def _sorted_candidates(self, day_shift):
-        # Least-used names first; while the shift has no leader yet, leaders are tried first.
-        # Once it has one, non-leaders are tried first so leaders stay available for other shifts.
-        sorted_names = sorted(selection_counts, key=selection_counts.get)
+        # Fewest accumulated hours first (shift count as tie-breaker) so totals even out
+        # even when shifts have different lengths. While the shift has no leader yet,
+        # leaders are tried first; once it has one, non-leaders are tried first so
+        # leaders stay available for other shifts.
+        sorted_names = sorted(selection_counts, key=lambda n: (self.hours_used[n], selection_counts[n], random.random()))
         if self.leaders:
             if not any(n in self.leaders for n in day_shift):
                 sorted_names = [n for n in sorted_names if n in self.leaders] + \
@@ -45,7 +69,6 @@ class Eframe:
         random.shuffle(dic_vals)
         random.shuffle(N_names_list)
         random.shuffle(N_names_list)
-        selection_counts = {name: 0 for name in N_names_list}  # Initialize counts to zero
 
         for i in range(len(self.main_keys)):
             k = 0  # Counter to ensure four unique names are added per key
@@ -73,10 +96,13 @@ class Eframe:
                     if str(self.main_keys[i]) in self.vacation[name]:
                         print('we gonna pass by hee how ')
                         pass
-                    elif name not in self.N_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i - 1]]:
+                    elif self._hours_ok(name, 0, self.main_keys[i]) and name not in self.N_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i - 1]] \
+                            and name not in self.WK_dic[self.main_keys[i]] \
+                            and (i + 1 >= len(self.main_keys) or name not in self.WK_dic[self.main_keys[i + 1]]):
                         if self.data.include_shift[0] == 1:
                             self.N_dic[self.main_keys[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
+                            self.hours_used[name] += self._shift_hours(0, self.main_keys[i])
                         k += 1  # Increment unique count for this key
                         break  # Exit inner loop to move to the next unique position
             if broke:
@@ -134,11 +160,13 @@ class Eframe:
                     # Check for collisions across `AM_dic` and `PM_dic`
                     if str(self.main_keys[i]) in self.vacation[name]:
                         pass
-                    elif name not in self.PM_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i]] \
-                            and name not in self.N_dic[self.main_keys[i - 1]]:
+                    elif self._hours_ok(name, 1, self.main_keys[i]) and name not in self.PM_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i]] \
+                            and name not in self.N_dic[self.main_keys[i - 1]] \
+                            and name not in self.WK_dic[self.main_keys[i]]:
                         if self.data.include_shift[1] == 1:
                             self.PM_dic[self.main_keys[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
+                            self.hours_used[name] += self._shift_hours(1, self.main_keys[i])
                         k += 1  # Increment unique count for this key
                         break  # Exit inner loop to move to the next unique position
 
@@ -189,15 +217,16 @@ class Eframe:
                     name = sorted_names[nam]
 
                     # Check for collisions across `AM_dic` and `PM_dic`
-                    if str(self.main_keys[i]) in self.vacation[name]:
+                    if str(self.week_end[i]) in self.vacation[name]:
                         pass
-                    elif name not in self.PM_dic[self.week_end[i]] \
+                    elif self._hours_ok(name, 2, self.week_end[i]) and name not in self.PM_dic[self.week_end[i]] \
                             and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 2]] \
                             and name not in self.WK_dic[self.week_end[i]] \
                             and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 1]]:
                         if self.data.include_shift[2] == 1:
                             self.WK_dic[self.week_end[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
+                            self.hours_used[name] += self._shift_hours(2, self.week_end[i])
                         k += 1  # Increment unique count for this key
                         break  # Exit inner loop to move to the next unique position
             if brokeWK:
@@ -278,6 +307,19 @@ class Eframe:
             employee_keys = list(merg.keys())
             employee_shift_perday = merg[]'''
         dataa.update(merge_dicts(PM, N, WK))# important line
+
+        total_hours = []
+        for nm in self.names:
+            tot = 0
+            for d in self.main_keys:
+                if nm in self.N_dic[d]:
+                    tot += self._shift_hours(0, d)
+                if nm in self.PM_dic[d]:
+                    tot += self._shift_hours(1, d)
+                if nm in self.WK_dic[d]:
+                    tot += self._shift_hours(2, d)
+            total_hours.append(tot)
+        dataa["Total Hours"] = total_hours
 
         '''for key, value in dataa.items():
             print(f"{key}: {value}")

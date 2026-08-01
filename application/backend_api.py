@@ -45,6 +45,8 @@ os.environ["REDIRECT_URI"] = "https://duty-api-1.onrender.com/authted"
 # Then retrieve it like usual
 redirect_uri = os.getenv("REDIRECT_URI")
 
+
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
@@ -115,6 +117,9 @@ class Data(BaseModel):
     e_num: int
     include_shift: list # a list contain 3 elements first is n shift second is pm third is am shift 1 mean allow 0 mean not
     emp_per_shift: list # determines the shift size for each shift
+    hours_per_shift: list = Field(default=[8, 8, 8])  # hours worked in each shift (n, pm, weekend)
+    max_month_hours: int = Field(default=0)  # cap on total hours per employee for the month, 0 = no cap
+    weekend_hours: list = Field(default=[])  # [n, pm] hours on weekend days; empty = same as weekday
     holi: list = Field(default=[])  # Default holidays
     monthh: int = Field(default=0) #month that to schedule in
     vac: dict = Field(default={})  # Default vacation data
@@ -164,6 +169,9 @@ class TeamScheduleData(BaseModel):
     team_id: int
     include_shift: list
     emp_per_shift: list
+    hours_per_shift: list = Field(default=[8, 8, 8])
+    max_month_hours: int = Field(default=0)
+    weekend_hours: list = Field(default=[])
     holi: list = Field(default=[])
     monthh: int = Field(default=0)
     down: str = Field(default="down")
@@ -343,11 +351,13 @@ async def get(data: Data, background_tasks: BackgroundTasks):
         T.next_nmonth(data.monthh)
     week_end.extend(data.holi)
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, weekend_hours=data.weekend_hours)
 
+    # WK first: the weekend crew pool is small, so it spreads evenly while everyone
+    # is still free; N and PM then balance hours around it
+    e.WK()
     e.N()
     e.PM()
-    e.WK()
 
     excel_file = e.print()
 
@@ -433,10 +443,10 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
         def __init__(self, include_shift):
             self.include_shift = include_shift
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, weekend_hours=data.weekend_hours)
+    e.WK()
     e.N()
     e.PM()
-    e.WK()
 
     excel_file = e.print()
     e.count_shifts()
@@ -629,6 +639,6 @@ async def admin(admin_id:servefile):
 
 
 # remember use uvicorn {thjsfilename}:{fastapi varible} --reload
-#uvicorn package.backend_api:app --reload
+#uvicorn application.backend_api:app --reload
 
 # if i dont have postman use the route /docs automaticly shows me what i need

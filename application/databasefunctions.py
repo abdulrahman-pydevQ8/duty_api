@@ -311,7 +311,9 @@ def create_file_table():
         id SERIAL PRIMARY KEY,
         user_email TEXT,
         user_id INTEGER,
-        original_filename TEXT NOT NULL)""")
+        original_filename TEXT NOT NULL,
+        file_data BYTEA)""")
+        cursor.execute("ALTER TABLE filess ADD COLUMN IF NOT EXISTS file_data BYTEA;")
         conn.commit()
         cursor.close()
     finally:
@@ -319,14 +321,14 @@ def create_file_table():
 
 
 #files
-def save_file_metadata(user_email, user_id,original_filename):
+def save_file_metadata(user_email, user_id,original_filename, file_bytes):
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO filess (user_email, user_id, original_filename)
-            VALUES (%s, %s, %s);
-        """, (user_email, user_id, original_filename))
+            INSERT INTO filess (user_email, user_id, original_filename, file_data)
+            VALUES (%s, %s, %s, %s);
+        """, (user_email, user_id, original_filename, psycopg2.Binary(file_bytes)))
         conn.commit()
         cursor.close()
     finally:
@@ -357,10 +359,27 @@ def get_user_files(user_id):
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT original_filename FROM filess WHERE user_id = %s;", (user_id,))
+        cursor.execute("SELECT original_filename, COALESCE(octet_length(file_data), 0) FROM filess WHERE user_id = %s;", (user_id,))
         results = cursor.fetchall()
         cursor.close()
-        return [row[0] for row in results]
+        return [{'name': row[0], 'size': row[1]} for row in results]
+    finally:
+        db_pool.putconn(conn)
+
+def get_user_file_data(user_id):
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT original_filename, file_data FROM filess
+            WHERE user_id = %s AND file_data IS NOT NULL
+            ORDER BY id DESC LIMIT 1;
+        """, (user_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        if result is None:
+            return None
+        return {'name': result[0], 'data': bytes(result[1])}
     finally:
         db_pool.putconn(conn)
 
@@ -368,12 +387,6 @@ def delete_user_file(email):
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id , original_filename FROM filess WHERE user_email = %s;", (email,))
-        result = cursor.fetchone()
-        file_path = os.path.join(f'./temp/{result[0]}', "schedule.xlsx")
-
-        os.remove(file_path)
-
         cursor.execute("DELETE  FROM filess WHERE user_email = %s;", (email,))
         conn.commit()
         cursor.close()

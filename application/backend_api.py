@@ -12,7 +12,6 @@ from pathlib import Path
 import random
 import pandas as pd
 from datetime import timedelta
-import shutil
 
 from datetime import timedelta
 import calendar
@@ -27,7 +26,7 @@ from .employeframe import Eframe
 from.databasefunctions import *
 
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -582,32 +581,23 @@ async def delete_team(request: DeleteTeam):
 
 @app.post("/files")
 async def showfile(user_iid:serveuser):
-    filenames = get_user_files(user_iid.user_id)
-    files_gen = []
-    for filename in filenames:
-        file_path = f"./temp/{user_iid.user_id}/{filename}"
-        try:
-            size = os.path.getsize(file_path)
-        except OSError:
-            size = 0
-        files_gen.append({'name': filename, 'size': size})
-    return files_gen
+    return get_user_files(user_iid.user_id)
 
 
 
 @app.post('/savefile')
 async def savefile(file_data:Filee, background_tasks: BackgroundTasks):
+ file = file_data.original_filename
+
+ with open(file, 'rb') as f:
+     file_bytes = f.read()
+
  save_file_metadata(user_email=file_data.user_email,
                     user_id=file_data.user_id,
-                    original_filename=file_data.original_filename)
+                    original_filename=file_data.original_filename,
+                    file_bytes=file_bytes)
 
-
- file = file_data.original_filename
- path = f'./temp/{file_data.user_id}/{file_data.original_filename}'
-
- os.makedirs(os.path.dirname(path), exist_ok=True)
-
- shutil.move(file, path)
+ os.remove(file)
  print_all_user_data()
 
  return { "message": "Upload successful!" }
@@ -616,15 +606,16 @@ async def savefile(file_data:Filee, background_tasks: BackgroundTasks):
 
 @app.post('/servefile')
 async def servefile(user_file:serveuser):
-    #this line change to /d/temp in production
-    file_path = os.path.join(f'./temp/{user_file.user_id}', "schedule.xlsx")
+    stored = get_user_file_data(user_file.user_id)
     print(user_file.user_id)
-    if not os.path.isfile(file_path):
+    if stored is None:
         raise HTTPException(status_code=404, detail="File not found")
 
-    # Return the file as a streaming response
-
-    return FileResponse(path=file_path, filename="schedule.xlsx")
+    return Response(
+        content=stored['data'],
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{stored["name"]}"'}
+    )
 
 @app.post('/deletefile')
 async def deletefile(user_file:Filee):

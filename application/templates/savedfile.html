@@ -978,8 +978,9 @@
       });
     }
 
-    // Function to format file size
-    function formatFileSize(sizeKB) {
+    // Function to format file size (backend sends bytes)
+    function formatFileSize(sizeBytes) {
+      const sizeKB = sizeBytes / 1024;
       if (sizeKB < 1024) {
         return `${Math.round(sizeKB)} KB`;
       } else {

@@ -505,11 +505,20 @@
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="nightShiftSlider">
                 <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Hours per shift</span>
-                  <div class="stepper">
-                    <button type="button" onclick="bump('nightHours', -1)">−</button>
-                    <input type="number" min="1" max="24" value="8" id="nightHours">
-                    <button type="button" onclick="bump('nightHours', 1)">+</button>
+                  <span class="slider-row-label">Define hours per shift</span>
+                  <label class="switch">
+                    <input type="checkbox" id="nightCustomHours">
+                    <span class="switch-track"><span class="switch-knob"></span></span>
+                  </label>
+                </div>
+                <div id="nightHoursWrap" style="display:none;">
+                  <div class="slider-row" style="margin-top:14px;">
+                    <span class="slider-row-label">Hours per shift</span>
+                    <div class="stepper">
+                      <button type="button" onclick="bump('nightHours', -1)">−</button>
+                      <input type="number" min="1" max="24" value="8" id="nightHours">
+                      <button type="button" onclick="bump('nightHours', 1)">+</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -534,11 +543,20 @@
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="pmShiftSlider">
                 <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Hours per shift</span>
-                  <div class="stepper">
-                    <button type="button" onclick="bump('pmHours', -1)">−</button>
-                    <input type="number" min="1" max="24" value="8" id="pmHours">
-                    <button type="button" onclick="bump('pmHours', 1)">+</button>
+                  <span class="slider-row-label">Define hours per shift</span>
+                  <label class="switch">
+                    <input type="checkbox" id="pmCustomHours">
+                    <span class="switch-track"><span class="switch-knob"></span></span>
+                  </label>
+                </div>
+                <div id="pmHoursWrap" style="display:none;">
+                  <div class="slider-row" style="margin-top:14px;">
+                    <span class="slider-row-label">Hours per shift</span>
+                    <div class="stepper">
+                      <button type="button" onclick="bump('pmHours', -1)">−</button>
+                      <input type="number" min="1" max="24" value="8" id="pmHours">
+                      <button type="button" onclick="bump('pmHours', 1)">+</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -563,37 +581,52 @@
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="weekendShiftSlider">
                 <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Hours per shift</span>
-                  <div class="stepper">
-                    <button type="button" onclick="bump('weekendHours', -1)">−</button>
-                    <input type="number" min="1" max="24" value="8" id="weekendHours">
-                    <button type="button" onclick="bump('weekendHours', 1)">+</button>
-                  </div>
+                  <span class="slider-row-label">Define hours per shift</span>
+                  <label class="switch">
+                    <input type="checkbox" id="weekendCustomHours">
+                    <span class="switch-track"><span class="switch-knob"></span></span>
+                  </label>
                 </div>
-                <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">N shift hours (weekend)</span>
-                  <div class="stepper">
-                    <button type="button" onclick="bump('weekendNHours', -1)">−</button>
-                    <input type="number" min="1" max="24" value="8" id="weekendNHours">
-                    <button type="button" onclick="bump('weekendNHours', 1)">+</button>
+                <div id="weekendHoursWrap" style="display:none;">
+                  <div class="slider-row" style="margin-top:14px;">
+                    <span class="slider-row-label">Hours per shift</span>
+                    <div class="stepper">
+                      <button type="button" onclick="bump('weekendHours', -1)">−</button>
+                      <input type="number" min="1" max="24" value="8" id="weekendHours">
+                      <button type="button" onclick="bump('weekendHours', 1)">+</button>
+                    </div>
                   </div>
-                </div>
-                <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">PM shift hours (weekend)</span>
-                  <div class="stepper">
-                    <button type="button" onclick="bump('weekendPmHours', -1)">−</button>
-                    <input type="number" min="1" max="24" value="8" id="weekendPmHours">
-                    <button type="button" onclick="bump('weekendPmHours', 1)">+</button>
+                  <div class="slider-row" style="margin-top:14px;">
+                    <span class="slider-row-label">N shift hours (weekend)</span>
+                    <div class="stepper">
+                      <button type="button" onclick="bump('weekendNHours', -1)">−</button>
+                      <input type="number" min="1" max="24" value="8" id="weekendNHours">
+                      <button type="button" onclick="bump('weekendNHours', 1)">+</button>
+                    </div>
+                  </div>
+                  <div class="slider-row" style="margin-top:14px;">
+                    <span class="slider-row-label">PM shift hours (weekend)</span>
+                    <div class="stepper">
+                      <button type="button" onclick="bump('weekendPmHours', -1)">−</button>
+                      <input type="number" min="1" max="24" value="8" id="weekendPmHours">
+                      <button type="button" onclick="bump('weekendPmHours', 1)">+</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="form-group" style="margin-top:16px;">
-            <label for="maxMonthHours">Max hours per employee per month (optional)</label>
+          <div class="form-group" id="hoursLimitGroup" style="margin-top:16px; display:none;">
+            <label for="maxMonthHours">Hours per employee per month (optional)
+              <span id="hoursLimitToggle" style="float:right; display:inline-flex; border:1px solid #2b3140; border-radius:8px; overflow:hidden;">
+                <button type="button" data-v="max" onclick="setLimitType('max')" style="padding:3px 12px; font-size:12px; font-family:inherit; border:none; cursor:pointer; background:#5b76f7; color:#fff;">Max</button>
+                <button type="button" data-v="min" onclick="setLimitType('min')" style="padding:3px 12px; font-size:12px; font-family:inherit; border:none; cursor:pointer; background:transparent; color:inherit;">Min</button>
+              </span>
+            </label>
+            <input type="hidden" id="hoursLimitType" value="max">
             <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160">
-            <p class="help-text">No employee will be scheduled past this total. Leave empty for no limit</p>
+            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: employees below it get shifts first until everyone reaches it. Leave empty for no limit</p>
           </div>
 
           <div class="btn-group">
@@ -631,6 +664,7 @@
 
           <div class="btn-group">
             <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+            <button type="button" class="btn btn-success" id="saveScheduleBtn">Save to My Files</button>
             <button type="submit" class="btn btn-primary">Download Schedule</button>
           </div>
         </div>
@@ -679,6 +713,15 @@
       const min = parseInt(inp.min) || 1;
       const max = parseInt(inp.max) || 24;
       inp.value = Math.min(max, Math.max(min, (parseInt(inp.value) || min) + d));
+    }
+
+    function setLimitType(v) {
+      document.getElementById('hoursLimitType').value = v;
+      document.querySelectorAll('#hoursLimitToggle button').forEach(b => {
+        const on = b.getAttribute('data-v') === v;
+        b.style.background = on ? '#5b76f7' : 'transparent';
+        b.style.color = on ? '#fff' : 'inherit';
+      });
     }
 
     // ── JWT helpers ────────────────────────────────────────────────────────
@@ -799,13 +842,9 @@
     }
 
     // ── Form submit ────────────────────────────────────────────────────────
-    document.getElementById('stepForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      hideAlerts();
-
+    function buildTeamPayload(mode) {
       const holidays = document.getElementById('holidaysInput').value.trim();
-
-      const payload = {
+      return {
         team_id:       selectedTeamId,
         include_shift: [
           document.getElementById('includeNightShift').checked   ? 1 : 0,
@@ -822,14 +861,22 @@
           parseInt(pmHours.value) || 8,
           parseInt(weekendHours.value) || 8,
         ],
-        max_month_hours: parseInt(document.getElementById('maxMonthHours').value) || 0,
+        max_month_hours: document.getElementById('hoursLimitType').value === 'max' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
+        min_month_hours: document.getElementById('hoursLimitType').value === 'min' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
         weekend_hours: document.getElementById('includeWeekendShift').checked
           ? [parseInt(weekendNHours.value) || 8, parseInt(weekendPmHours.value) || 8]
           : [],
         holi:   holidays ? holidays.split(',').map(h => h.trim()).filter(Boolean) : [],
         monthh: parseInt(monthSelect.value),
-        down:   'down',
+        down:   mode,
       };
+    }
+
+    document.getElementById('stepForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      hideAlerts();
+
+      const payload = buildTeamPayload('down');
 
       const submitBtn = e.target.querySelector('[type="submit"]');
       submitBtn.textContent = 'Generating...';
@@ -866,6 +913,52 @@
       }
     });
 
+    // ── Save to My Files ───────────────────────────────────────────────────
+    document.getElementById('saveScheduleBtn').addEventListener('click', async function() {
+      hideAlerts();
+
+      const token = localStorage.getItem('token');
+      const user = token ? parseJwt(token) : null;
+      if (!user || !(user.user_id || user.sub || user.id)) {
+        showError('Sign in first to save schedules.');
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveScheduleBtn');
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      try {
+        const res = await fetch('/schedule_team', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildTeamPayload('save'))
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err || `Server error ${res.status}`);
+        }
+
+        const saveRes = await fetch('/savefile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: String(user.user_id || user.sub || user.id),
+            user_email: String(user.email),
+            original_filename: 'schedule.xlsx'
+          })
+        });
+        if (!saveRes.ok) throw new Error('Server error ' + saveRes.status);
+
+        showSuccess('Schedule saved to your files.');
+      } catch (err) {
+        showError('Save failed: ' + err.message);
+      } finally {
+        saveBtn.textContent = 'Save to My Files';
+        saveBtn.disabled = false;
+      }
+    });
+
     // ── Alert helpers ──────────────────────────────────────────────────────
     function showError(msg)   { errorAlert.textContent = msg;   errorAlert.style.display = 'block';   successAlert.style.display = 'none'; }
     function showSuccess(msg) { successAlert.textContent = msg; successAlert.style.display = 'block'; errorAlert.style.display = 'none'; }
@@ -899,6 +992,25 @@
       wire('includeNightShift', 'nightShiftSlider', 'nightShiftValue', 'nightShiftBadge');
       wire('includePmShift', 'pmShiftSlider', 'pmShiftValue', 'pmShiftBadge');
       wire('includeWeekendShift', 'weekendShiftSlider', 'weekendShiftValue', 'weekendShiftBadge');
+
+      var customToggles = [
+        { toggle: 'nightCustomHours',   wrap: 'nightHoursWrap',   inputs: ['nightHours'] },
+        { toggle: 'pmCustomHours',      wrap: 'pmHoursWrap',      inputs: ['pmHours'] },
+        { toggle: 'weekendCustomHours', wrap: 'weekendHoursWrap', inputs: ['weekendHours', 'weekendNHours', 'weekendPmHours'] }
+      ];
+      function syncLimitGroup() {
+        var anyOn = customToggles.some(function (c) { return document.getElementById(c.toggle).checked; });
+        document.getElementById('hoursLimitGroup').style.display = anyOn ? '' : 'none';
+        if (!anyOn) document.getElementById('maxMonthHours').value = '';
+      }
+      customToggles.forEach(function (c) {
+        var cb = document.getElementById(c.toggle);
+        cb.addEventListener('change', function () {
+          document.getElementById(c.wrap).style.display = cb.checked ? '' : 'none';
+          if (!cb.checked) c.inputs.forEach(function (id) { document.getElementById(id).value = 8; });
+          syncLimitGroup();
+        });
+      });
     })();
   </script>
 </body>

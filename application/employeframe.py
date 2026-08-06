@@ -1,13 +1,13 @@
 import copy
 import random
-from openpyxl.styles import PatternFill, Alignment
+from openpyxl.styles import PatternFill, Alignment, Border, Side
 import pandas as pd
 from openpyxl import load_workbook
 
 
 
 class Eframe:
-    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None, hours_per_shift=None, max_month_hours=0, weekend_hours=None):
+    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None, hours_per_shift=None, max_month_hours=0, min_month_hours=0, weekend_hours=None):
         global name, N, index, selection_counts, month_name, excel_file
         self.main_keys = main_keys.copy()
         self.WK_dic = copy.deepcopy(main_dic)
@@ -24,6 +24,7 @@ class Eframe:
         # [N, PM] hours on weekend days; falls back to the weekday hours
         self.weekend_hours = weekend_hours if weekend_hours else [self.hours_per_shift[0], self.hours_per_shift[1]]
         self.max_month_hours = max_month_hours or 0  # 0 = no cap
+        self.min_month_hours = min_month_hours or 0  # 0 = no floor
         self.hours_used = {n: 0 for n in name_list}
         self._we_set = {str(w) for w in self.week_end}
         global selection_counts
@@ -44,11 +45,12 @@ class Eframe:
         return self.hours_used[name] + self._shift_hours(shift_idx, day) <= self.max_month_hours
 
     def _sorted_candidates(self, day_shift):
-        # Fewest accumulated hours first (shift count as tie-breaker) so totals even out
-        # even when shifts have different lengths. While the shift has no leader yet,
-        # leaders are tried first; once it has one, non-leaders are tried first so
-        # leaders stay available for other shifts.
-        sorted_names = sorted(selection_counts, key=lambda n: (self.hours_used[n], selection_counts[n], random.random()))
+        # Employees still under the monthly minimum come first, then fewest accumulated
+        # hours (shift count as tie-breaker) so totals even out even when shifts have
+        # different lengths. While the shift has no leader yet, leaders are tried first;
+        # once it has one, non-leaders are tried first so leaders stay available for
+        # other shifts.
+        sorted_names = sorted(selection_counts, key=lambda n: (self.min_month_hours > 0 and self.hours_used[n] >= self.min_month_hours, self.hours_used[n], selection_counts[n], random.random()))
         if self.leaders:
             if not any(n in self.leaders for n in day_shift):
                 sorted_names = [n for n in sorted_names if n in self.leaders] + \
@@ -308,19 +310,6 @@ class Eframe:
             employee_shift_perday = merg[]'''
         dataa.update(merge_dicts(PM, N, WK))# important line
 
-        total_hours = []
-        for nm in self.names:
-            tot = 0
-            for d in self.main_keys:
-                if nm in self.N_dic[d]:
-                    tot += self._shift_hours(0, d)
-                if nm in self.PM_dic[d]:
-                    tot += self._shift_hours(1, d)
-                if nm in self.WK_dic[d]:
-                    tot += self._shift_hours(2, d)
-            total_hours.append(tot)
-        dataa["Total Hours"] = total_hours
-
         '''for key, value in dataa.items():
             print(f"{key}: {value}")
             print(f"{key}: {len(value)}")'''
@@ -337,8 +326,11 @@ class Eframe:
         for w in range(len(self.week_end)):
             for r in range(int(max_ro) - 2):
                 ws.cell(row=3 + r, column=1 + int(self.week_end[w])).fill = dark_fill
-        for row in ws.iter_rows():
+        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                             top=Side(style="thin"), bottom=Side(style="thin"))
+        for row in ws.iter_rows(min_row=1, max_row=max_ro, min_col=1, max_col=max_co):
             for cell in row:
+                cell.border = thin_border
                 if cell.value:  # Only format non-empty cells
                     cell.alignment = Alignment(horizontal="center")
         excel_file = 'schedule.xlsx'

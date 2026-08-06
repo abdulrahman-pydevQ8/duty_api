@@ -118,6 +118,7 @@ class Data(BaseModel):
     emp_per_shift: list # determines the shift size for each shift
     hours_per_shift: list = Field(default=[8, 8, 8])  # hours worked in each shift (n, pm, weekend)
     max_month_hours: int = Field(default=0)  # cap on total hours per employee for the month, 0 = no cap
+    min_month_hours: int = Field(default=0)  # floor on total hours per employee for the month, 0 = no floor
     weekend_hours: list = Field(default=[])  # [n, pm] hours on weekend days; empty = same as weekday
     holi: list = Field(default=[])  # Default holidays
     monthh: int = Field(default=0) #month that to schedule in
@@ -170,6 +171,7 @@ class TeamScheduleData(BaseModel):
     emp_per_shift: list
     hours_per_shift: list = Field(default=[8, 8, 8])
     max_month_hours: int = Field(default=0)
+    min_month_hours: int = Field(default=0)
     weekend_hours: list = Field(default=[])
     holi: list = Field(default=[])
     monthh: int = Field(default=0)
@@ -300,12 +302,10 @@ async def read_root():
 
 
 
-@app.get('/d', response_class=HTMLResponse)
+@app.get('/d')
 async def dis():
-    path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
-
-    html_page = Path(path).read_text(encoding="utf-8")
-    return HTMLResponse(content=html_page)
+    # manual generator removed from the frontend; send old links to the team flow
+    return RedirectResponse(url="/team_schedule")
 
 @app.post('/d')
 async def get(data: Data, background_tasks: BackgroundTasks):
@@ -350,7 +350,7 @@ async def get(data: Data, background_tasks: BackgroundTasks):
         T.next_nmonth(data.monthh)
     week_end.extend(data.holi)
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, weekend_hours=data.weekend_hours)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours)
 
     # WK first: the weekend crew pool is small, so it spreads evenly while everyone
     # is still free; N and PM then balance hours around it
@@ -442,7 +442,7 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
         def __init__(self, include_shift):
             self.include_shift = include_shift
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, weekend_hours=data.weekend_hours)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours)
     e.WK()
     e.N()
     e.PM()

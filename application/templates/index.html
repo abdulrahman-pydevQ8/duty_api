@@ -125,9 +125,15 @@
         <div id="shiftList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px;"></div>
 
         <div style="margin-bottom: 8px;">
-          <label class="sg-label" for="maxMonthHours">Max hours per employee <span style="color:#6e768c; font-weight:400;">(per month, optional)</span></label>
+          <label class="sg-label" for="maxMonthHours">Hours per employee <span style="color:#6e768c; font-weight:400;">(per month, optional)</span>
+            <span id="hoursLimitToggle" style="float: right; display: inline-flex; border: 1px solid #2b3140; border-radius: 8px; overflow: hidden;">
+              <button type="button" data-v="max" onclick="SG.setLimitType('max')" style="padding: 3px 12px; font-size: 12px; font-family: inherit; border: none; cursor: pointer; background: #5b76f7; color: #fff;">Max</button>
+              <button type="button" data-v="min" onclick="SG.setLimitType('min')" style="padding: 3px 12px; font-size: 12px; font-family: inherit; border: none; cursor: pointer; background: transparent; color: #c7ccda;">Min</button>
+            </span>
+          </label>
+          <input type="hidden" id="hoursLimitType" value="max" />
           <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" />
-          <p class="sg-hint">No employee will be scheduled past this total. Leave empty for no limit.</p>
+          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: employees below it get shifts first until everyone reaches it. Leave empty for no limit.</p>
         </div>
 
         <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
@@ -399,7 +405,8 @@
       include_shift: state.shifts.map(function (sh) { return sh.enabled ? 1 : 0; }),
       emp_per_shift: state.shifts.map(function (sh) { return sh.staff; }),
       hours_per_shift: state.shifts.map(function (sh) { return sh.hours; }),
-      max_month_hours: parseInt($('maxMonthHours').value, 10) || 0,
+      max_month_hours: $('hoursLimitType').value === 'max' ? (parseInt($('maxMonthHours').value, 10) || 0) : 0,
+      min_month_hours: $('hoursLimitType').value === 'min' ? (parseInt($('maxMonthHours').value, 10) || 0) : 0,
       weekend_hours: state.shifts[2].enabled ? [state.weekendHours.n, state.weekendHours.pm] : [],
       holi: holidays ? holidays.split(',').map(function (h) { return h.trim(); }).filter(Boolean) : [],
       monthh: parseInt($('monthSel').value, 10),
@@ -423,6 +430,14 @@
   }
 
   window.SG = {
+    setLimitType: function (v) {
+      $('hoursLimitType').value = v;
+      document.querySelectorAll('#hoursLimitToggle button').forEach(function (b) {
+        var on = b.getAttribute('data-v') === v;
+        b.style.background = on ? '#5b76f7' : 'transparent';
+        b.style.color = on ? '#fff' : '#c7ccda';
+      });
+    },
     next: function () {
       if (state.step === 1) {
         var n = parseInt($('numEmployees').value, 10);

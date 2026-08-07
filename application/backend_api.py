@@ -1,9 +1,10 @@
 from numpy.lib.utils import byte_bounds
 from starlette.responses import FileResponse
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi import BackgroundTasks, File, UploadFile
 import os
+import json
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import requests
@@ -107,6 +108,7 @@ app.add_middleware(
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Min-Hours-Shortfall"],
 )
 
 
@@ -302,6 +304,17 @@ async def read_root():
 
 
 
+def _min_hours_headers(e):
+    """Header telling the frontend who ended the month under the requested hours floor."""
+    short = e.below_min()
+    if not short:
+        return {}
+    # only the first few names travel in the header so a big team can't blow the header size limit
+    summary = {"min": e.min_month_hours, "count": len(short), "lowest": short[0][1],
+               "names": [str(n) for n, _ in short[:8]]}
+    return {"X-Min-Hours-Shortfall": json.dumps(summary)}
+
+
 @app.get('/d')
 async def dis():
     # manual generator removed from the frontend; send old links to the team flow
@@ -369,11 +382,13 @@ async def get(data: Data, background_tasks: BackgroundTasks):
     '''if data.save == True:
         pass
     else:'''
+    hours_headers = _min_hours_headers(e)
     if data.down == 'down':
         return FileResponse(file_path,
                             media_type="application/octet-stream",
-                            filename=f'{file_path}')
-    else:return print('did gene the file but did not download')
+                            filename=f'{file_path}',
+                            headers=hours_headers)
+    else:return JSONResponse(None, headers=hours_headers)
 
 
 
@@ -450,9 +465,11 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
     excel_file = e.print()
     e.count_shifts()
 
+    hours_headers = _min_hours_headers(e)
     if data.down == 'down':
         background_tasks.add_task(os.unlink, excel_file)
-        return FileResponse(excel_file, media_type="application/octet-stream", filename=excel_file)
+        return FileResponse(excel_file, media_type="application/octet-stream", filename=excel_file, headers=hours_headers)
+    return JSONResponse(None, headers=hours_headers)
 
 
 @app.get("/files", response_class=HTMLResponse)

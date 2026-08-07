@@ -44,6 +44,14 @@ class Eframe:
             return True
         return self.hours_used[name] + self._shift_hours(shift_idx, day) <= self.max_month_hours
 
+    def below_min(self):
+        # Employees left under the monthly minimum after every shift is handed out.
+        # The month only holds so many hours, so a floor can simply be unreachable.
+        if not self.min_month_hours:
+            return []
+        short = [[n, h] for n, h in self.hours_used.items() if h < self.min_month_hours]
+        return sorted(short, key=lambda p: p[1])
+
     def _sorted_candidates(self, day_shift):
         # Employees still under the monthly minimum come first, then fewest accumulated
         # hours (shift count as tie-breaker) so totals even out even when shifts have
@@ -309,6 +317,8 @@ class Eframe:
             employee_keys = list(merg.keys())
             employee_shift_perday = merg[]'''
         dataa.update(merge_dicts(PM, N, WK))# important line
+        # last column: hours each employee ends the month on
+        dataa["total hours"] = [self.hours_used[n] for n in self.names]
 
         '''for key, value in dataa.items():
             print(f"{key}: {value}")

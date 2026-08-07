@@ -626,7 +626,7 @@
             </label>
             <input type="hidden" id="hoursLimitType" value="max">
             <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160">
-            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: employees below it get shifts first until everyone reaches it. Leave empty for no limit</p>
+            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: hours are spread evenly and anyone still short of the total is reported after generating — the month may not hold enough shifts to reach it. Leave empty for no limit</p>
           </div>
 
           <div class="btn-group">
@@ -904,7 +904,7 @@
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        showSuccess('Schedule generated and downloaded!');
+        showSuccess('Schedule generated and downloaded!' + shortfallNote(res));
       } catch (err) {
         showError('Error: ' + err.message);
       } finally {
@@ -950,7 +950,7 @@
         });
         if (!saveRes.ok) throw new Error('Server error ' + saveRes.status);
 
-        showSuccess('Schedule saved to your files.');
+        showSuccess('Schedule saved to your files.' + shortfallNote(res));
       } catch (err) {
         showError('Save failed: ' + err.message);
       } finally {
@@ -960,6 +960,14 @@
     });
 
     // ── Alert helpers ──────────────────────────────────────────────────────
+    function shortfallNote(res) {
+      const raw = res.headers.get('X-Min-Hours-Shortfall');
+      if (!raw) return '';
+      const s = JSON.parse(raw);
+      const extra = s.count > s.names.length ? ` +${s.count - s.names.length} more` : '';
+      return ` ${s.count} employee(s) stayed under the ${s.min}h minimum (lowest ${s.lowest}h): ${s.names.join(', ')}${extra}.`;
+    }
+
     function showError(msg)   { errorAlert.textContent = msg;   errorAlert.style.display = 'block';   successAlert.style.display = 'none'; }
     function showSuccess(msg) { successAlert.textContent = msg; successAlert.style.display = 'block'; errorAlert.style.display = 'none'; }
     function hideAlerts()     { errorAlert.style.display = 'none'; successAlert.style.display = 'none'; }

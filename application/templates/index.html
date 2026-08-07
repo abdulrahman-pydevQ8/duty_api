@@ -133,7 +133,7 @@
           </label>
           <input type="hidden" id="hoursLimitType" value="max" />
           <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" />
-          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: employees below it get shifts first until everyone reaches it. Leave empty for no limit.</p>
+          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: hours are spread evenly and anyone still short of the total is reported after generating — the month may not hold enough shifts to reach it. Leave empty for no limit.</p>
         </div>
 
         <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
@@ -396,6 +396,15 @@
     }
   }
 
+  function shortfallNote(res) {
+    var raw = res.headers.get('X-Min-Hours-Shortfall');
+    if (!raw) return '';
+    var s = JSON.parse(raw);
+    var extra = s.count > s.names.length ? ' +' + (s.count - s.names.length) + ' more' : '';
+    return ' ' + s.count + ' employee(s) stayed under the ' + s.min + 'h minimum (lowest ' +
+           s.lowest + 'h): ' + s.names.join(', ') + extra + '.';
+  }
+
   function buildPayload(mode) {
     var vac = {};
     state.vacations.forEach(function (v) { vac[String(v.emp)] = [String(v.start), String(v.end)]; });
@@ -470,7 +479,7 @@
       var user = token ? parseJwt(token) : null;
       if (!user || !user.user_id) { flash('error', 'Sign in first to save schedules.'); return; }
       try {
-        await generateSchedule('save');
+        var gen = await generateSchedule('save');
         var res = await fetch('/savefile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -481,7 +490,7 @@
           })
         });
         if (!res.ok) throw new Error('Server error ' + res.status);
-        flash('success', 'Schedule saved to your files.');
+        flash('success', 'Schedule saved to your files.' + shortfallNote(gen));
       } catch (err) {
         flash('error', 'Save failed: ' + err.message);
       }
@@ -498,7 +507,7 @@
         a.click();
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        flash('success', 'Schedule downloaded.');
+        flash('success', 'Schedule downloaded.' + shortfallNote(res));
       } catch (err) {
         flash('error', 'Download failed: ' + err.message);
       }

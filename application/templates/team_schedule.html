@@ -625,8 +625,8 @@
               </span>
             </label>
             <input type="hidden" id="hoursLimitType" value="max">
-            <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160">
-            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: shifts are moved between employees until everyone reaches it; if the month has too few hours, you are told the closest total reached. Leave empty for no limit</p>
+            <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+            <p class="help-text" id="hoursLimitHint">No employee is scheduled past this total. Leave empty for no limit</p>
           </div>
 
           <div class="btn-group">
@@ -722,6 +722,9 @@
         b.style.background = on ? '#5b76f7' : 'transparent';
         b.style.color = on ? '#fff' : 'inherit';
       });
+      document.getElementById('hoursLimitHint').textContent = v === 'max'
+        ? 'No employee is scheduled past this total. Leave empty for no limit'
+        : 'Shifts are moved between employees until everyone reaches this total; if the month has too few hours, you are told the closest reached. Leave empty for no limit';
     }
 
     // ── JWT helpers ────────────────────────────────────────────────────────

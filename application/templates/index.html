@@ -132,8 +132,8 @@
             </span>
           </label>
           <input type="hidden" id="hoursLimitType" value="max" />
-          <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" />
-          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: shifts are moved between employees until everyone reaches it; if the month has too few hours, you are told the closest total reached. Leave empty for no limit.</p>
+          <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" />
+          <p class="sg-hint" id="hoursLimitHint">No employee is scheduled past this total. Leave empty for no limit.</p>
         </div>
 
         <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
@@ -457,6 +457,9 @@
         b.style.background = on ? '#5b76f7' : 'transparent';
         b.style.color = on ? '#fff' : '#c7ccda';
       });
+      $('hoursLimitHint').textContent = v === 'max'
+        ? 'No employee is scheduled past this total. Leave empty for no limit.'
+        : 'Shifts are moved between employees until everyone reaches this total; if the month has too few hours, you are told the closest reached. Leave empty for no limit.';
     },
     next: function () {
       if (state.step === 1) {

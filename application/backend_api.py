@@ -272,7 +272,7 @@ async def authted(code: str = None, error: str = None):
         # 1. Check if this user exists in your database
         # 2. Create a new user if they don't exist
         # 3. Generate a session or JWT for the user
-        access_token = create_access_token(data=user_info, expires_delta=timedelta(minutes=15))
+        access_token = create_access_token(data=user_info, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
         # For now, just return the user information as JSON
         html_content = f"""
            <html>
@@ -302,6 +302,13 @@ async def read_root():
     html_path = Path(path).read_text(encoding="utf-8")
     return HTMLResponse(content=html_path)
 
+
+
+def _hours_specified(data):
+    # frontends send hours_per_shift [] when the user left hours alone; any hour
+    # setting or an hours limit means the user is thinking in hours
+    return bool(data.hours_per_shift) or bool(data.weekend_hours) \
+        or data.max_month_hours > 0 or data.min_month_hours > 0
 
 
 def _min_hours_headers(e):
@@ -363,13 +370,14 @@ async def get(data: Data, background_tasks: BackgroundTasks):
         T.next_nmonth(data.monthh)
     week_end.extend(data.holi)
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, data, vacations, main_keys_days, week_end, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours, hours_specified=_hours_specified(data))
 
     # WK first: the weekend crew pool is small, so it spreads evenly while everyone
     # is still free; N and PM then balance hours around it
     e.WK()
     e.N()
     e.PM()
+    e.rebalance_min()
 
     excel_file = e.print()
 
@@ -457,10 +465,11 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
         def __init__(self, include_shift):
             self.include_shift = include_shift
 
-    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours)
+    e = Eframe(main_dic, main_keys, names_list, data.emp_per_shift, _ShiftConfig(data.include_shift), vacations, main_keys_days, week_end, leaders=leaders, hours_per_shift=data.hours_per_shift, max_month_hours=data.max_month_hours, min_month_hours=data.min_month_hours, weekend_hours=data.weekend_hours, hours_specified=_hours_specified(data))
     e.WK()
     e.N()
     e.PM()
+    e.rebalance_min()
 
     excel_file = e.print()
     e.count_shifts()

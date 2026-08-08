@@ -626,7 +626,7 @@
             </label>
             <input type="hidden" id="hoursLimitType" value="max">
             <input type="number" class="form-control" id="maxMonthHours" min="0" placeholder="E.g., 160">
-            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: hours are spread evenly and anyone still short of the total is reported after generating — the month may not hold enough shifts to reach it. Leave empty for no limit</p>
+            <p class="help-text">Maximum: no employee is scheduled past this total. Minimum: shifts are moved between employees until everyone reaches it; if the month has too few hours, you are told the closest total reached. Leave empty for no limit</p>
           </div>
 
           <div class="btn-group">
@@ -727,7 +727,12 @@
     // ── JWT helpers ────────────────────────────────────────────────────────
     function parseJwt(token) {
       try {
-        return JSON.parse(atob(token.split('.')[1]));
+        const p = JSON.parse(atob(token.split('.')[1]));
+        if (p && p.exp && Date.now() >= p.exp * 1000) {
+          localStorage.removeItem('token'); // expired — sign out automatically
+          return null;
+        }
+        return p;
       } catch { return null; }
     }
 
@@ -856,14 +861,17 @@
           parseInt(pmShiftSlider.value),
           parseInt(weekendShiftSlider.value),
         ],
-        hours_per_shift: [
-          parseInt(nightHours.value) || 8,
-          parseInt(pmHours.value) || 8,
-          parseInt(weekendHours.value) || 8,
-        ],
+        // [] when no custom-hours toggle is on: the backend then reports shift counts instead of hours
+        hours_per_shift: ['nightCustomHours', 'pmCustomHours', 'weekendCustomHours'].some(id => document.getElementById(id).checked)
+          ? [
+              parseInt(nightHours.value) || 8,
+              parseInt(pmHours.value) || 8,
+              parseInt(weekendHours.value) || 8,
+            ]
+          : [],
         max_month_hours: document.getElementById('hoursLimitType').value === 'max' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
         min_month_hours: document.getElementById('hoursLimitType').value === 'min' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
-        weekend_hours: document.getElementById('includeWeekendShift').checked
+        weekend_hours: document.getElementById('weekendCustomHours').checked
           ? [parseInt(weekendNHours.value) || 8, parseInt(weekendPmHours.value) || 8]
           : [],
         holi:   holidays ? holidays.split(',').map(h => h.trim()).filter(Boolean) : [],
@@ -965,7 +973,7 @@
       if (!raw) return '';
       const s = JSON.parse(raw);
       const extra = s.count > s.names.length ? ` +${s.count - s.names.length} more` : '';
-      return ` ${s.count} employee(s) stayed under the ${s.min}h minimum (lowest ${s.lowest}h): ${s.names.join(', ')}${extra}.`;
+      return ` The month does not hold enough hours for the ${s.min}h minimum — closest reached: ${s.lowest}h. ${s.count} employee(s) below it: ${s.names.join(', ')}${extra}.`;
     }
 
     function showError(msg)   { errorAlert.textContent = msg;   errorAlert.style.display = 'block';   successAlert.style.display = 'none'; }

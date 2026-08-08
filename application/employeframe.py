@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 
 
 class Eframe:
-    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None, hours_per_shift=None, max_month_hours=0, min_month_hours=0, weekend_hours=None):
+    def __init__(self, main_dic, main_keys, name_list, shift_limit, data,vacation, main_keys_days, week_end, leaders=None, hours_per_shift=None, max_month_hours=0, min_month_hours=0, weekend_hours=None, hours_specified=True):
         global name, N, index, selection_counts, month_name, excel_file
         self.main_keys = main_keys.copy()
         self.WK_dic = copy.deepcopy(main_dic)
@@ -25,6 +25,7 @@ class Eframe:
         self.weekend_hours = weekend_hours if weekend_hours else [self.hours_per_shift[0], self.hours_per_shift[1]]
         self.max_month_hours = max_month_hours or 0  # 0 = no cap
         self.min_month_hours = min_month_hours or 0  # 0 = no floor
+        self.hours_specified = hours_specified  # False = user never set hours; last column shows shift counts
         self.hours_used = {n: 0 for n in name_list}
         self._we_set = {str(w) for w in self.week_end}
         global selection_counts
@@ -43,6 +44,73 @@ class Eframe:
         if not self.max_month_hours:
             return True
         return self.hours_used[name] + self._shift_hours(shift_idx, day) <= self.max_month_hours
+
+    def _can_take(self, p, shift_idx, day):
+        # Whether p can legally take this shift: honors vacations, the max cap,
+        # one shift per day, and the same adjacency rules the passes enforce.
+        if str(day) in self.vacation[p] or not self._hours_ok(p, shift_idx, day):
+            return False
+        if p in self.N_dic[day] or p in self.PM_dic[day] or p in self.WK_dic[day]:
+            return False
+        i = self.main_keys.index(day)
+        prev_d = self.main_keys[i - 1] if i > 0 else None
+        next_d = self.main_keys[i + 1] if i + 1 < len(self.main_keys) else None
+        if prev_d and p in self.N_dic[prev_d]:
+            return False  # no shift the day after a night
+        if shift_idx == 0 and next_d and (p in self.N_dic[next_d] or p in self.PM_dic[next_d] or p in self.WK_dic[next_d]):
+            return False  # no night right before any next-day shift
+        return True
+
+    def rebalance_min(self):
+        # Runs after the WK/N/PM passes. Hands shifts from the fullest employees
+        # to those still under the monthly minimum until everyone reaches it or no
+        # legal move is left — the floor then lands as close to the minimum as the
+        # month allows. Day staffing never changes, only who holds each shift.
+        if not self.min_month_hours:
+            return
+        dics = {0: self.N_dic, 1: self.PM_dic, 2: self.WK_dic}
+        for _ in range(len(self.names) * 40):  # hard stop; every move strictly evens totals
+            under = sorted((n for n in self.names if self.hours_used[n] < self.min_month_hours),
+                           key=lambda n: self.hours_used[n])
+            best = None
+            for p in under:
+                for idx, dic in dics.items():
+                    for day in self.main_keys:
+                        crew = dic[day]
+                        if not crew or not self._can_take(p, idx, day):
+                            continue
+                        hrs = self._shift_hours(idx, day)
+                        for d in crew:
+                            if self.hours_used[d] - hrs <= self.hours_used[p]:
+                                continue  # would just swap who is short
+                            if d in self.leaders and p not in self.leaders and not any(x in self.leaders for x in crew if x != d):
+                                continue  # keep the shift's only leader
+                            if best is None or self.hours_used[d] > self.hours_used[best[2]]:
+                                best = (idx, day, d, p)
+                if best:
+                    break  # settle the poorest employee before the next one
+            if best is None:
+                break
+            idx, day, d, p = best
+            dics[idx][day].remove(d)
+            dics[idx][day].append(p)
+            hrs = self._shift_hours(idx, day)
+            self.hours_used[d] -= hrs
+            self.hours_used[p] += hrs
+            selection_counts[d] -= 1
+            selection_counts[p] += 1
+        self._remark()
+
+    def _remark(self):
+        # Refresh the printable mark grids after rebalancing moved names around
+        global N, PM, WK
+        grids = []
+        for dic, mark in ((self.N_dic, "N"), (self.PM_dic, "PM"), (self.WK_dic, "AM")):
+            g = {}
+            for day in self.main_keys:
+                g[day] = [mark if nm in dic[day] else "" for nm in self.names]
+            grids.append(g)
+        N, PM, WK = grids
 
     def below_min(self):
         # Employees left under the monthly minimum after every shift is handed out.
@@ -316,9 +384,19 @@ class Eframe:
             merg = merge_dicts(PM,N,WK)
             employee_keys = list(merg.keys())
             employee_shift_perday = merg[]'''
-        dataa.update(merge_dicts(PM, N, WK))# important line
-        # last column: hours each employee ends the month on
-        dataa["total hours"] = [self.hours_used[n] for n in self.names]
+        merged = merge_dicts(PM, N, WK)# important line
+        dataa.update(merged)
+        # last column, computed from the printed cells themselves so it always matches
+        # the sheet; plain shift counts when the user never brought hours into play
+        shift_of = {"N": 0, "PM": 1, "AM": 2}
+        totals = []
+        for i in range(len(self.names)):
+            cells = [(d, merged[d][i]) for d in self.main_keys if merged[d][i] in shift_of]
+            if self.hours_specified:
+                totals.append(sum(self._shift_hours(shift_of[m], d) for d, m in cells))
+            else:
+                totals.append(len(cells))
+        dataa["total hours" if self.hours_specified else "total shifts"] = totals
 
         '''for key, value in dataa.items():
             print(f"{key}: {value}")

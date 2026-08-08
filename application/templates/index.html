@@ -133,7 +133,7 @@
           </label>
           <input type="hidden" id="hoursLimitType" value="max" />
           <input class="sg-input" type="number" min="0" id="maxMonthHours" placeholder="e.g. 160" />
-          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: hours are spread evenly and anyone still short of the total is reported after generating — the month may not hold enough shifts to reach it. Leave empty for no limit.</p>
+          <p class="sg-hint">Maximum: no employee is scheduled past this total. Minimum: shifts are moved between employees until everyone reaches it; if the month has too few hours, you are told the closest total reached. Leave empty for no limit.</p>
         </div>
 
         <button class="sg-btn sg-btn-primary" style="width: 100%; margin-top: 24px;" onclick="SG.next()">Continue</button>
@@ -390,7 +390,12 @@
       var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
-      return JSON.parse(jsonPayload);
+      var payload = JSON.parse(jsonPayload);
+      if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
+        localStorage.removeItem('token'); // expired — sign out automatically
+        return null;
+      }
+      return payload;
     } catch (e) {
       return null;
     }
@@ -401,22 +406,28 @@
     if (!raw) return '';
     var s = JSON.parse(raw);
     var extra = s.count > s.names.length ? ' +' + (s.count - s.names.length) + ' more' : '';
-    return ' ' + s.count + ' employee(s) stayed under the ' + s.min + 'h minimum (lowest ' +
-           s.lowest + 'h): ' + s.names.join(', ') + extra + '.';
+    return ' The month does not hold enough hours for the ' + s.min + 'h minimum — closest reached: ' +
+           s.lowest + 'h. ' + s.count + ' employee(s) below it: ' + s.names.join(', ') + extra + '.';
   }
 
   function buildPayload(mode) {
     var vac = {};
     state.vacations.forEach(function (v) { vac[String(v.emp)] = [String(v.start), String(v.end)]; });
     var holidays = $('holidays').value.trim();
+    var limitHours = parseInt($('maxMonthHours').value, 10) || 0;
+    // hours count as specified once any hour input leaves its 8h default or a limit is set;
+    // otherwise send [] so the sheet reports shift counts instead of hours
+    var hoursSpecified = limitHours > 0 ||
+      state.shifts.some(function (sh) { return Number(sh.hours) !== 8; }) ||
+      (state.shifts[2].enabled && (Number(state.weekendHours.n) !== 8 || Number(state.weekendHours.pm) !== 8));
     return {
       e_num: parseInt($('numEmployees').value, 10),
       include_shift: state.shifts.map(function (sh) { return sh.enabled ? 1 : 0; }),
       emp_per_shift: state.shifts.map(function (sh) { return sh.staff; }),
-      hours_per_shift: state.shifts.map(function (sh) { return sh.hours; }),
-      max_month_hours: $('hoursLimitType').value === 'max' ? (parseInt($('maxMonthHours').value, 10) || 0) : 0,
-      min_month_hours: $('hoursLimitType').value === 'min' ? (parseInt($('maxMonthHours').value, 10) || 0) : 0,
-      weekend_hours: state.shifts[2].enabled ? [state.weekendHours.n, state.weekendHours.pm] : [],
+      hours_per_shift: hoursSpecified ? state.shifts.map(function (sh) { return sh.hours; }) : [],
+      max_month_hours: $('hoursLimitType').value === 'max' ? limitHours : 0,
+      min_month_hours: $('hoursLimitType').value === 'min' ? limitHours : 0,
+      weekend_hours: hoursSpecified && state.shifts[2].enabled ? [state.weekendHours.n, state.weekendHours.pm] : [],
       holi: holidays ? holidays.split(',').map(function (h) { return h.trim(); }).filter(Boolean) : [],
       monthh: parseInt($('monthSel').value, 10),
       vac: vac,

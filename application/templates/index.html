@@ -415,19 +415,14 @@
     state.vacations.forEach(function (v) { vac[String(v.emp)] = [String(v.start), String(v.end)]; });
     var holidays = $('holidays').value.trim();
     var limitHours = parseInt($('maxMonthHours').value, 10) || 0;
-    // hours count as specified once any hour input leaves its 8h default or a limit is set;
-    // otherwise send [] so the sheet reports shift counts instead of hours
-    var hoursSpecified = limitHours > 0 ||
-      state.shifts.some(function (sh) { return Number(sh.hours) !== 8; }) ||
-      (state.shifts[2].enabled && (Number(state.weekendHours.n) !== 8 || Number(state.weekendHours.pm) !== 8));
     return {
       e_num: parseInt($('numEmployees').value, 10),
       include_shift: state.shifts.map(function (sh) { return sh.enabled ? 1 : 0; }),
       emp_per_shift: state.shifts.map(function (sh) { return sh.staff; }),
-      hours_per_shift: hoursSpecified ? state.shifts.map(function (sh) { return sh.hours; }) : [],
+      hours_per_shift: state.shifts.map(function (sh) { return parseInt(sh.hours, 10) || 8; }),
       max_month_hours: $('hoursLimitType').value === 'max' ? limitHours : 0,
       min_month_hours: $('hoursLimitType').value === 'min' ? limitHours : 0,
-      weekend_hours: hoursSpecified && state.shifts[2].enabled ? [state.weekendHours.n, state.weekendHours.pm] : [],
+      weekend_hours: state.shifts[2].enabled ? [parseInt(state.weekendHours.n, 10) || 8, parseInt(state.weekendHours.pm, 10) || 8] : [],
       holi: holidays ? holidays.split(',').map(function (h) { return h.trim(); }).filter(Boolean) : [],
       monthh: parseInt($('monthSel').value, 10),
       vac: vac,

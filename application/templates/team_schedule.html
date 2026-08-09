@@ -504,14 +504,7 @@
                   <span class="slider-value" id="nightShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="nightShiftSlider">
-                <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Define hours per shift</span>
-                  <label class="switch">
-                    <input type="checkbox" id="nightCustomHours">
-                    <span class="switch-track"><span class="switch-knob"></span></span>
-                  </label>
-                </div>
-                <div id="nightHoursWrap" style="display:none;">
+                <div id="nightHoursWrap">
                   <div class="slider-row" style="margin-top:14px;">
                     <span class="slider-row-label">Hours per shift</span>
                     <div class="stepper">
@@ -542,14 +535,7 @@
                   <span class="slider-value" id="pmShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="pmShiftSlider">
-                <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Define hours per shift</span>
-                  <label class="switch">
-                    <input type="checkbox" id="pmCustomHours">
-                    <span class="switch-track"><span class="switch-knob"></span></span>
-                  </label>
-                </div>
-                <div id="pmHoursWrap" style="display:none;">
+                <div id="pmHoursWrap">
                   <div class="slider-row" style="margin-top:14px;">
                     <span class="slider-row-label">Hours per shift</span>
                     <div class="stepper">
@@ -580,14 +566,7 @@
                   <span class="slider-value" id="weekendShiftValue">4</span>
                 </div>
                 <input type="range" min="2" max="10" value="4" class="slider" id="weekendShiftSlider">
-                <div class="slider-row" style="margin-top:14px;">
-                  <span class="slider-row-label">Define hours per shift</span>
-                  <label class="switch">
-                    <input type="checkbox" id="weekendCustomHours">
-                    <span class="switch-track"><span class="switch-knob"></span></span>
-                  </label>
-                </div>
-                <div id="weekendHoursWrap" style="display:none;">
+                <div id="weekendHoursWrap">
                   <div class="slider-row" style="margin-top:14px;">
                     <span class="slider-row-label">Hours per shift</span>
                     <div class="stepper">
@@ -617,7 +596,7 @@
             </div>
           </div>
 
-          <div class="form-group" id="hoursLimitGroup" style="margin-top:16px; display:none;">
+          <div class="form-group" id="hoursLimitGroup" style="margin-top:16px;">
             <label for="maxMonthHours">Hours per employee per month (optional)
               <span id="hoursLimitToggle" style="float:right; display:inline-flex; border:1px solid #2b3140; border-radius:8px; overflow:hidden;">
                 <button type="button" data-v="max" onclick="setLimitType('max')" style="padding:3px 12px; font-size:12px; font-family:inherit; border:none; cursor:pointer; background:#5b76f7; color:#fff;">Max</button>
@@ -820,7 +799,8 @@
       hideAlerts();
 
       if (current === 1) {
-        if (!selectedTeamId) { showError('Please select a team'); return; }
+        // no red banner here: the dropdown itself says sign in / create a team / select one
+        if (!selectedTeamId) return;
         if (teamMembers.length === 0) { showError('Selected team has no members'); return; }
         indicators[0].className = 'step completed';
         indicators[1].className = 'step active';
@@ -864,19 +844,14 @@
           parseInt(pmShiftSlider.value),
           parseInt(weekendShiftSlider.value),
         ],
-        // [] when no custom-hours toggle is on: the backend then reports shift counts instead of hours
-        hours_per_shift: ['nightCustomHours', 'pmCustomHours', 'weekendCustomHours'].some(id => document.getElementById(id).checked)
-          ? [
-              parseInt(nightHours.value) || 8,
-              parseInt(pmHours.value) || 8,
-              parseInt(weekendHours.value) || 8,
-            ]
-          : [],
+        hours_per_shift: [
+          parseInt(nightHours.value) || 8,
+          parseInt(pmHours.value) || 8,
+          parseInt(weekendHours.value) || 8,
+        ],
         max_month_hours: document.getElementById('hoursLimitType').value === 'max' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
         min_month_hours: document.getElementById('hoursLimitType').value === 'min' ? (parseInt(document.getElementById('maxMonthHours').value) || 0) : 0,
-        weekend_hours: document.getElementById('weekendCustomHours').checked
-          ? [parseInt(weekendNHours.value) || 8, parseInt(weekendPmHours.value) || 8]
-          : [],
+        weekend_hours: [parseInt(weekendNHours.value) || 8, parseInt(weekendPmHours.value) || 8],
         holi:   holidays ? holidays.split(',').map(h => h.trim()).filter(Boolean) : [],
         monthh: parseInt(monthSelect.value),
         down:   mode,
@@ -1012,24 +987,6 @@
       wire('includePmShift', 'pmShiftSlider', 'pmShiftValue', 'pmShiftBadge');
       wire('includeWeekendShift', 'weekendShiftSlider', 'weekendShiftValue', 'weekendShiftBadge');
 
-      var customToggles = [
-        { toggle: 'nightCustomHours',   wrap: 'nightHoursWrap',   inputs: ['nightHours'] },
-        { toggle: 'pmCustomHours',      wrap: 'pmHoursWrap',      inputs: ['pmHours'] },
-        { toggle: 'weekendCustomHours', wrap: 'weekendHoursWrap', inputs: ['weekendHours', 'weekendNHours', 'weekendPmHours'] }
-      ];
-      function syncLimitGroup() {
-        var anyOn = customToggles.some(function (c) { return document.getElementById(c.toggle).checked; });
-        document.getElementById('hoursLimitGroup').style.display = anyOn ? '' : 'none';
-        if (!anyOn) document.getElementById('maxMonthHours').value = '';
-      }
-      customToggles.forEach(function (c) {
-        var cb = document.getElementById(c.toggle);
-        cb.addEventListener('change', function () {
-          document.getElementById(c.wrap).style.display = cb.checked ? '' : 'none';
-          if (!cb.checked) c.inputs.forEach(function (id) { document.getElementById(id).value = 8; });
-          syncLimitGroup();
-        });
-      });
     })();
   </script>
 </body>

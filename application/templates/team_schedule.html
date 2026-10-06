@@ -736,7 +736,7 @@
       try {
         const res = await fetch('/user_teams', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify({ user_id: String(userId) })
         });
 
@@ -782,7 +782,7 @@
       try {
         const res = await fetch('/serve_members', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify({ team_id: selectedTeamId })
         });
 
@@ -871,7 +871,7 @@
       try {
         const res = await fetch('/schedule_team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify(payload)
         });
 
@@ -917,7 +917,7 @@
       try {
         const res = await fetch('/schedule_team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify(buildTeamPayload('save'))
         });
         if (!res.ok) {
@@ -925,13 +925,14 @@
           throw new Error(err || `Server error ${res.status}`);
         }
 
+        const generated = await res.json();
         const saveRes = await fetch('/savefile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify({
             user_id: String(user.user_id || user.sub || user.id),
             user_email: String(user.email),
-            original_filename: 'schedule.xlsx'
+            original_filename: generated.file
           })
         });
         if (!saveRes.ok) throw new Error('Server error ' + saveRes.status);

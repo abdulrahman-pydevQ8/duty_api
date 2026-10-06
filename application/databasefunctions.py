@@ -39,7 +39,6 @@ def user_id(email):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email = %s;", (email,))
         result = cursor.fetchone()
-        print(f"this is the user id according to the db {result[0]}")
         cursor.close()
         return result[0]  # True if user exists
     finally:
@@ -98,6 +97,34 @@ def serve_team(user_id):
         db_pool.putconn(conn)
 
 
+def team_owner(team_id):
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT owner_id FROM teams WHERE team_id = %s;", (team_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result[0] if result else None
+    finally:
+        db_pool.putconn(conn)
+
+
+def member_team_owner(member_id):
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT t.owner_id FROM members m
+            JOIN teams t ON t.team_id = m.team_id
+            WHERE m.member_id = %s;
+        """, (member_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result[0] if result else None
+    finally:
+        db_pool.putconn(conn)
+
+
 def serving_members(team_id):
     conn = db_pool.getconn()
     try:
@@ -120,7 +147,6 @@ def serving_members(team_id):
         db_pool.putconn(conn)
 
 def save_new_team(team_name, user_id):
-    print(f"save new team {team_name} {user_id} nnnnnnnnnnnnnbnbnbnbnbn")
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
@@ -183,7 +209,6 @@ def delete_table():
 
 def save_new_member(team_id, member_name, member_role=None, vacation_start=None, vacation_end=None):
     conn = db_pool.getconn()
-    print(team_id, member_name, member_role, vacation_start, vacation_end)
     try:
         cursor = conn.cursor()
         cursor.execute("""
@@ -434,67 +459,5 @@ def save_new_user(name, email):
         conn.commit()
         cursor.close()
         return True  # New user saved successfully
-    finally:
-        db_pool.putconn(conn)
-
-
-#printing
-def print_user_data(email):
-    conn = db_pool.getconn()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = %s;", (email,))
-        user = cursor.fetchone()
-        cursor.close()
-
-        if user:
-            column_names = [desc[0] for desc in cursor.description]
-            user_data = dict(zip(column_names, user))
-            print("User Data:")
-            for key, value in user_data.items():
-                print(f"{key}: {value}")
-            return user_data  # optional, in case you want to use it elsewhere
-        else:
-            print("User not found.")
-            return None
-
-    finally:
-        db_pool.putconn(conn)
-
-def print_all_user_data():
-    conn = db_pool.getconn()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users;")
-        users = cursor.fetchall()
-        column_names = [desc[0] for desc in cursor.description]
-        cursor.close()
-
-        if users:
-            print("All Users:")
-            for user in users:
-                user_data = dict(zip(column_names, user))
-                for key, value in user_data.items():
-                    print(f"{key}: {value}")
-                print("-" * 20)  # separator between users
-            return users
-        else:
-            print("No users found.")
-            return []
-
-    finally:
-        db_pool.putconn(conn)
-
-
-
-
-def print_users():
-    conn = db_pool.getconn()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users;")
-        for row in cursor.fetchall():
-            print(row)
-        cursor.close()
     finally:
         db_pool.putconn(conn)

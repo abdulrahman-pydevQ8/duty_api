@@ -1,5 +1,7 @@
 import copy
 import random
+import os
+import tempfile
 from openpyxl.styles import PatternFill, Alignment, Border, Side
 import pandas as pd
 from openpyxl import load_workbook
@@ -170,9 +172,7 @@ class Eframe:
                     name = sorted_names[nam]
 
                     # Check for collisions across `AM_dic` and `PM_dic`
-                    print(f'this emp {name} has this vac {self.vacation[name]} while this is the current day {self.main_keys[i]}')
                     if str(self.main_keys[i]) in self.vacation[name]:
-                        print('we gonna pass by hee how ')
                         pass
                     elif self._hours_ok(name, 0, self.main_keys[i]) and name not in self.N_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i - 1]] \
                             and name not in self.WK_dic[self.main_keys[i]] \
@@ -194,7 +194,6 @@ class Eframe:
 
             key = N[self.main_keys[N_e]]
             for i in range(len(N_names_list)):
-                # print(i)
                 tel = key
 
                 if N_names_list[i] in tel:
@@ -324,7 +323,6 @@ class Eframe:
             WK[self.main_keys[WK_e]] = empp
 
     def print(self):
-        global excel_file
         dataa = {
             "names": self.names
         }
@@ -375,8 +373,6 @@ class Eframe:
 
                     for x in range(len(cleaned_vac[name])):
                         merged_dict[cleaned_vac[name][x]][index] = 'H'
-                print('this is the merged dict')
-                print(merged_dict)
                 return merged_dict
 
         self.main_keys_days.insert(0, ' ')
@@ -398,12 +394,12 @@ class Eframe:
                 totals.append(len(cells))
         dataa["total hours" if self.hours_specified else "total shifts"] = totals
 
-        '''for key, value in dataa.items():
-            print(f"{key}: {value}")
-            print(f"{key}: {len(value)}")'''
         df = pd.DataFrame(dataa)
-        df.to_excel('Schedule.xlsx', index=False, engine='openpyxl')
-        wb = load_workbook('Schedule.xlsx')  # Replace with your file name
+        # unique file per request so concurrent users never share or delete each other's schedule
+        fd, excel_file = tempfile.mkstemp(prefix='schedule_', suffix='.xlsx')
+        os.close(fd)
+        df.to_excel(excel_file, index=False, engine='openpyxl')
+        wb = load_workbook(excel_file)
         ws = wb.active
         ws.insert_rows(1)
         for col_num, value in enumerate(self.main_keys_days, start=1):  # start=1 to start from column A
@@ -421,33 +417,10 @@ class Eframe:
                 cell.border = thin_border
                 if cell.value:  # Only format non-empty cells
                     cell.alignment = Alignment(horizontal="center")
-        excel_file = 'schedule.xlsx'
-        wb.save('schedule.xlsx')
+        wb.save(excel_file)
         return excel_file
-
-    def count_shifts(self):
-        for wq in range(len(self.names)):
-            namess = self.names[wq]
-            s = 0
-            for d in range(len(self.main_keys)):
-                rand = self.main_keys[d]
-                if namess in self.PM_dic[rand]:
-                    s += 1
-                if namess in self.N_dic[rand]:
-                    s += 1
-                if namess in self.WK_dic[rand]:
-                    s += 1
-
-            if s == 9 or s == 6:
-                print(f"{namess}={s}erororororororororooror")
-            else:
-                print(f"{namess}={s}")
 
     def count_days_shifts(self):
         for ein in range(len(self.main_keys)):
             l = len(self.N_dic[self.main_keys[ein]]) + len(self.PM_dic[self.main_keys[ein]])
             ll = l + len(self.WK_dic[self.main_keys[ein]])
-
-    def count_emps(self):
-        namelist = self.names.copy()
-        print(f"we have {len(namelist)} available employees")

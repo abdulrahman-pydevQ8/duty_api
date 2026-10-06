@@ -489,13 +489,14 @@
       if (!user || !user.user_id) { flash('error', 'Sign in first to save schedules.'); return; }
       try {
         var gen = await generateSchedule('save');
+        var generated = await gen.json();
         var res = await fetch('/savefile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: JSON.stringify({
             user_id: String(user.user_id),
             user_email: String(user.email),
-            original_filename: 'schedule.xlsx'
+            original_filename: generated.file
           })
         });
         if (!res.ok) throw new Error('Server error ' + res.status);

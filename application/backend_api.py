@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi import BackgroundTasks, File, UploadFile
 import os
 import json
+import tempfile
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import requests
@@ -55,7 +56,7 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
 
 # Security configurations for the token
-SECRET_KEY = "YOUR_SECRET_KEY"  # Generate a secure random key in production
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -78,6 +79,34 @@ def verify_token(token: str):
         return None
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return payload
+
+async def get_current_admin(user: dict = Depends(get_current_user)):
+    if user.get('email') != 'darkiiq8@gmail.com':
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return user
+
+def _require_team_owner(team_id, user):
+    owner = team_owner(team_id)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="Team not found")
+    if owner != user['user_id']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+def _require_member_owner(member_id, user):
+    owner = member_team_owner(member_id)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if owner != user['user_id']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
 
 # place for user files to be stored in the presistent disks
 
@@ -128,8 +157,6 @@ class Data(BaseModel):
     down: str = Field(default="down")
 
 class Filee(BaseModel):
-    user_id: str
-    user_email: str
     original_filename: str
 
 
@@ -157,11 +184,7 @@ class UpdateMemberRequest(BaseModel):
     member_role: Optional[int] = Field(default=None, ge=0, le=1)
     vacation_start: Optional[str] = None
     vacation_end: Optional[str] = None
-class serveuser(BaseModel):
-    user_id: str
-
 class DeleteTeam(BaseModel):
-    user_id: str
     team_name: str
 
 class ComplaintRequest(BaseModel):
@@ -250,9 +273,8 @@ async def authted(code: str = None, error: str = None):
         }
 
         bol = user_exists(user_info["email"])
-        if bol :
-            print_user_data(user_info["email"])
-        else:save_new_user(user_info['name'],user_info["email"])
+        if not bol:
+            save_new_user(user_info['name'],user_info["email"])
 
         user_info = {
             "user_id": user_id(id_info["email"]),
@@ -329,7 +351,6 @@ async def dis():
 
 @app.post('/d')
 async def get(data: Data, background_tasks: BackgroundTasks):
-    print(data)
     global names_list, vacations, month_name, week_end
     #if data.e_num <=20:
     #   data.e_num = 30
@@ -353,11 +374,7 @@ async def get(data: Data, background_tasks: BackgroundTasks):
     tot = len(data.vac.keys())
     k = list(data.vac.keys())
     for h in range(tot):
-        # print(f"this is vac_k[h] {data.vac[k[h]]}")
-        # print(f"this is k[h] {k[h]}")
-
         lis = []
-        # print(data.vac[k[h]][0])
         for i in range(int(data.vac[k[h]][0]), int(data.vac[k[h]][1]) + 1):  # +1 to include the end number
             lis.append(str(i))
 
@@ -381,7 +398,6 @@ async def get(data: Data, background_tasks: BackgroundTasks):
 
     excel_file = e.print()
 
-    e.count_shifts()
     file_path = excel_file
     # Path to the file
     if data.down == 'down':
@@ -394,9 +410,9 @@ async def get(data: Data, background_tasks: BackgroundTasks):
     if data.down == 'down':
         return FileResponse(file_path,
                             media_type="application/octet-stream",
-                            filename=f'{file_path}',
+                            filename='schedule.xlsx',
                             headers=hours_headers)
-    else:return JSONResponse(None, headers=hours_headers)
+    else:return JSONResponse({"file": os.path.basename(file_path)}, headers=hours_headers)
 
 
 
@@ -422,7 +438,8 @@ def _vacation_days_in_month(vacation_start, vacation_end, year, month):
 
 
 @app.post('/schedule_team')
-async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTasks):
+async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
+    _require_team_owner(data.team_id, user)
     members = get_team_members(data.team_id)
     if not members:
         raise HTTPException(status_code=404, detail="Team has no members")
@@ -472,13 +489,12 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
     e.rebalance_min()
 
     excel_file = e.print()
-    e.count_shifts()
 
     hours_headers = _min_hours_headers(e)
     if data.down == 'down':
         background_tasks.add_task(os.unlink, excel_file)
-        return FileResponse(excel_file, media_type="application/octet-stream", filename=excel_file, headers=hours_headers)
-    return JSONResponse(None, headers=hours_headers)
+        return FileResponse(excel_file, media_type="application/octet-stream", filename='schedule.xlsx', headers=hours_headers)
+    return JSONResponse({"file": os.path.basename(excel_file)}, headers=hours_headers)
 
 
 @app.get("/files", response_class=HTMLResponse)
@@ -519,13 +535,13 @@ async def admin_page():
 
 
 @app.post("/user_teams")
-async def get_teams(userr_id:serveuser):
-    teams = serve_team(userr_id.user_id)
-    print(teams)
+async def get_teams(user: dict = Depends(get_current_user)):
+    teams = serve_team(user['user_id'])
     return {"teams": teams}
 
 @app.post("/members")
-async def adding_member(member_data: AddMemberRequest):
+async def adding_member(member_data: AddMemberRequest, user: dict = Depends(get_current_user)):
+    _require_team_owner(member_data.team_id, user)
     create_members_table()
     save_new_member(
         member_data.team_id,
@@ -537,16 +553,19 @@ async def adding_member(member_data: AddMemberRequest):
     return {"message": "Member added successfully", "status": "success"}
 
 @app.post("/serve_members")
-async def serve_member(serve_mem: servemembers):
+async def serve_member(serve_mem: servemembers, user: dict = Depends(get_current_user)):
+    _require_team_owner(serve_mem.team_id, user)
     memrs = serving_members(serve_mem.team_id)
     return memrs
 
 @app.post("/delete_members")
-def deletee_member(delta: deletemember):
+def deletee_member(delta: deletemember, user: dict = Depends(get_current_user)):
+    _require_member_owner(delta.member_id, user)
     delete_member(delta.member_id)
 
 @app.post("/update_member")
-async def editing_member(member_data: UpdateMemberRequest):
+async def editing_member(member_data: UpdateMemberRequest, user: dict = Depends(get_current_user)):
+    _require_member_owner(member_data.member_id, user)
     update_member(
         member_data.member_id,
         member_data.member_name,
@@ -555,19 +574,6 @@ async def editing_member(member_data: UpdateMemberRequest):
         member_data.vacation_end
     )
     return {"message": "Member updated successfully", "status": "success"}
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return payload
-
-async def get_current_admin(user: dict = Depends(get_current_user)):
-    if user.get('email') != 'darkiiq8@gmail.com':
-        raise HTTPException(status_code=403, detail="Not authorized")
-    return user
 
 @app.get("/admin_data")
 async def admin_data(admin: dict = Depends(get_current_admin)):
@@ -580,10 +586,7 @@ async def admin_data(admin: dict = Depends(get_current_admin)):
 
 @app.post("/newteam")
 async def newteam(team_data:Team,user: dict = Depends(get_current_user)):
-    print(user)
     create_teams_table()
-    print(team_data)
-    print(team_data.team_name, user['user_id'])
     save_new_team(team_data.team_name, user['user_id'])
 
 
@@ -597,8 +600,8 @@ async def submit_complaint(complaint: ComplaintRequest, user: dict = Depends(get
 
 
 @app.post("/delete_team")
-async def delete_team(request: DeleteTeam):
-    success = delete_user_team(request.user_id, request.team_name)
+async def delete_team(request: DeleteTeam, user: dict = Depends(get_current_user)):
+    success = delete_user_team(user['user_id'], request.team_name)
     if success:
         return {"success": True, "message": "Team deleted successfully"}
     else:
@@ -606,34 +609,33 @@ async def delete_team(request: DeleteTeam):
 
 
 @app.post("/files")
-async def showfile(user_iid:serveuser):
-    return get_user_files(user_iid.user_id)
+async def showfile(user: dict = Depends(get_current_user)):
+    return get_user_files(user['user_id'])
 
 
 
 @app.post('/savefile')
-async def savefile(file_data:Filee, background_tasks: BackgroundTasks):
- file = file_data.original_filename
+async def savefile(file_data:Filee, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
+ # the generated file lives in the temp dir; only its bare name is accepted
+ file = os.path.join(tempfile.gettempdir(), os.path.basename(file_data.original_filename))
 
  with open(file, 'rb') as f:
      file_bytes = f.read()
 
- save_file_metadata(user_email=file_data.user_email,
-                    user_id=file_data.user_id,
-                    original_filename=file_data.original_filename,
+ save_file_metadata(user_email=user['email'],
+                    user_id=user['user_id'],
+                    original_filename='schedule.xlsx',
                     file_bytes=file_bytes)
 
  os.remove(file)
- print_all_user_data()
 
  return { "message": "Upload successful!" }
 
 
 
 @app.post('/servefile')
-async def servefile(user_file:serveuser):
-    stored = get_user_file_data(user_file.user_id)
-    print(user_file.user_id)
+async def servefile(user: dict = Depends(get_current_user)):
+    stored = get_user_file_data(user['user_id'])
     if stored is None:
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -644,8 +646,8 @@ async def servefile(user_file:serveuser):
     )
 
 @app.post('/deletefile')
-async def deletefile(user_file:Filee):
-    delete_user_file(user_file.user_email)
+async def deletefile(user: dict = Depends(get_current_user)):
+    delete_user_file(user['email'])
 
 '''@app.post('/admin')
 async def admin(admin_id:servefile):

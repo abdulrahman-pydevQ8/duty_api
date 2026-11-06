@@ -384,6 +384,41 @@
       background-color: #3249c9;
     }
 
+    /* Features (Arabic) */
+    .features {
+      direction: rtl;
+      text-align: right;
+      max-width: 640px;
+      margin: 40px auto 0;
+      padding: 24px 28px;
+      background: #14171f;
+      border: 1px solid #232838;
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    }
+
+    .features-title {
+      font-size: 1.25rem;
+      color: #e8eaf0;
+      margin-bottom: 16px;
+    }
+
+    .features-list {
+      list-style: disc;
+      margin: 0 0 16px;
+      padding: 0 22px 0 0;
+    }
+
+    .features-list li {
+      padding: 4px 0;
+      color: #c7ccda;
+    }
+
+    .features-note {
+      font-size: 0.9rem;
+      color: #8b93a7;
+    }
+
     /* Media Query for Mobile */
     @media screen and (max-width: 768px) {
       .navbar {
@@ -696,6 +731,17 @@
       <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
         <a href="/team_schedule" class="btn btn-primary" style="background-color:#2ea043;">Team Schedule</a>
       </div>
+
+      <section class="features" lang="ar">
+        <h3 class="features-title">إعداد جداول الخفارات من ساعات طويلة إلى دقائق</h3>
+        <ul class="features-list">
+          <li>إعداد الجداول خلال دقائق وفق احتياجات القسم.</li>
+          <li>إضافة الإجازات الرسمية والخاصة واحتساب ساعات العمل.</li>
+          <li>توزيع الموظفين حسب الخبرة، لضمان وجود موظف خبير في كل خفارة.</li>
+          <li>الاستخدام دون إنشاء حساب أو إدخال أسماء أو بيانات شخصية.</li>
+        </ul>
+        <p class="features-note">المشروع حاصل على شهادة حقوق ملكية فكرية من مكتبة الكويت الوطنية.</p>
+      </section>
     </div>
   </main>
 
@@ -731,7 +777,7 @@
         }).join(''));
         const payload = JSON.parse(jsonPayload);
         if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-          localStorage.removeItem("token"); // expired — sign out automatically
+          sessionStorage.removeItem("token"); // expired — sign out automatically
           return null;
         }
         return payload;
@@ -742,7 +788,7 @@
 
     // Authentication handling
     function initializeAuth() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const authButtons = document.querySelector(".auth-buttons");
       const profileSection = document.querySelector(".profile-section");
       const profilePic = document.querySelector(".profile-pic");

@@ -392,7 +392,7 @@
       }).join(''));
       var payload = JSON.parse(jsonPayload);
       if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-        localStorage.removeItem('token'); // expired — sign out automatically
+        sessionStorage.removeItem('token'); // expired — sign out automatically
         return null;
       }
       return payload;
@@ -484,7 +484,7 @@
       renderVacations();
     },
     save: async function () {
-      var token = localStorage.getItem('token');
+      var token = sessionStorage.getItem('token');
       var user = token ? parseJwt(token) : null;
       if (!user || !user.user_id) { flash('error', 'Sign in first to save schedules.'); return; }
       try {
@@ -492,7 +492,7 @@
         var generated = await gen.json();
         var res = await fetch('/savefile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify({
             user_id: String(user.user_id),
             user_email: String(user.email),

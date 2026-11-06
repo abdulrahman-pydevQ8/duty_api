@@ -1232,7 +1232,7 @@
         }).join(''));
         const payload = JSON.parse(jsonPayload);
         if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-          localStorage.removeItem("token"); // expired — sign out automatically
+          sessionStorage.removeItem("token"); // expired — sign out automatically
           return null;
         }
         return payload;
@@ -1243,7 +1243,7 @@
 
     // Authentication handling
     function initializeAuth() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const authButtons = document.querySelector(".auth-buttons");
       const profileSection = document.querySelector(".profile-section");
       const profilePic = document.querySelector(".profile-pic");
@@ -1287,7 +1287,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             team_id: parseInt(teamId, 10)
@@ -1447,7 +1447,7 @@ async function removeEmployee(employeeId) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
       },
       body: JSON.stringify({
         member_id: employeeId
@@ -1524,7 +1524,7 @@ async function removeEmployee(employeeId) {
         for (let i = 1; i <= count; i++) {
           const response = await fetch('/members', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
             body: JSON.stringify({
               team_id: teamIdInt,
               member_name: `${offset + i}`,
@@ -1600,7 +1600,7 @@ async function removeEmployee(employeeId) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify(requestBody)
         });
@@ -1654,7 +1654,7 @@ async function removeEmployee(employeeId) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify(requestBody)
         });

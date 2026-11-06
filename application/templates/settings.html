@@ -685,7 +685,7 @@
         }).join(''));
         const payload = JSON.parse(jsonPayload);
         if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-          localStorage.removeItem("token"); // expired — sign out automatically
+          sessionStorage.removeItem("token"); // expired — sign out automatically
           return null;
         }
         return payload;
@@ -696,7 +696,7 @@
 
     // Authentication handling
     function initializeAuth() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const authButtons = document.querySelector(".auth-buttons");
       const profileSection = document.querySelector(".profile-section");
       const profilePic = document.querySelector(".profile-pic");
@@ -731,7 +731,7 @@
           }
 
           signOutBtn.addEventListener('click', () => {
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
             window.location.href = "/";
           });
         } else {
@@ -748,7 +748,7 @@
 
     // Contact form handling
     async function sendComplaint() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const messageInput = document.getElementById("contactMessage");
       const sendBtn = document.getElementById("contactSendBtn");
       const statusText = document.getElementById("contactStatus");

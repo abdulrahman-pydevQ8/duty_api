@@ -711,7 +711,7 @@
       try {
         const p = JSON.parse(atob(token.split('.')[1]));
         if (p && p.exp && Date.now() >= p.exp * 1000) {
-          localStorage.removeItem('token'); // expired — sign out automatically
+          sessionStorage.removeItem('token'); // expired — sign out automatically
           return null;
         }
         return p;
@@ -719,7 +719,7 @@
     }
 
     function getUserId() {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) return null;
       const p = parseJwt(token);
       return p ? (p.user_id || p.sub || p.id) : null;
@@ -736,7 +736,7 @@
       try {
         const res = await fetch('/user_teams', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify({ user_id: String(userId) })
         });
 
@@ -782,7 +782,7 @@
       try {
         const res = await fetch('/serve_members', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify({ team_id: selectedTeamId })
         });
 
@@ -871,7 +871,7 @@
       try {
         const res = await fetch('/schedule_team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify(payload)
         });
 
@@ -903,7 +903,7 @@
     document.getElementById('saveScheduleBtn').addEventListener('click', async function() {
       hideAlerts();
 
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const user = token ? parseJwt(token) : null;
       if (!user || !(user.user_id || user.sub || user.id)) {
         showError('Sign in first to save schedules.');
@@ -917,7 +917,7 @@
       try {
         const res = await fetch('/schedule_team', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify(buildTeamPayload('save'))
         });
         if (!res.ok) {
@@ -928,7 +928,7 @@
         const generated = await res.json();
         const saveRes = await fetch('/savefile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('token')}` },
           body: JSON.stringify({
             user_id: String(user.user_id || user.sub || user.id),
             user_email: String(user.email),

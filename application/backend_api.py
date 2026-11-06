@@ -58,7 +58,7 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 # Security configurations for the token
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30  # 30 days; the browser drops the token when the tab closes
 
 
 
@@ -300,8 +300,8 @@ async def authted(code: str = None, error: str = None):
            <html>
                <head>
                    <script>
-                       // Store the token (you can change localStorage to sessionStorage if needed)
-                       localStorage.setItem("token", "{access_token}");
+                       // Store the token for this tab only; it is cleared when the tab closes
+                       sessionStorage.setItem("token", "{access_token}");
 
                        // Redirect to homepage
                        window.location.href = "/";

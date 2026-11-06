@@ -975,7 +975,7 @@
         }).join(''));
         const payload = JSON.parse(jsonPayload);
         if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-          localStorage.removeItem("token"); // expired — sign out automatically
+          sessionStorage.removeItem("token"); // expired — sign out automatically
           return null;
         }
         return payload;
@@ -993,7 +993,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             user_id: String(userId)
@@ -1031,7 +1031,7 @@
       emptyTeamsState.style.display = 'none';
       createTeamForm.style.display = 'none';
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         loadingState.style.display = 'none';
@@ -1113,7 +1113,7 @@
         return;
       }
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) {
         alert("Please sign in to delete teams");
         return;
@@ -1132,7 +1132,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             user_id: String(userId),
@@ -1159,7 +1159,7 @@
 
     // Authentication handling
     function initializeAuth() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const authButtons = document.querySelector(".auth-buttons");
       const profileSection = document.querySelector(".profile-section");
       const profilePic = document.querySelector(".profile-pic");
@@ -1237,7 +1237,7 @@
           return;
         }
 
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           alert("Please sign in to create teams");
           return;

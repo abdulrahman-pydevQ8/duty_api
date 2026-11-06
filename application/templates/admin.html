@@ -309,7 +309,7 @@
         }
 
         async function loadAdminData() {
-            const token = localStorage.getItem("token");
+            const token = sessionStorage.getItem("token");
             if (!token) {
                 showRestricted();
                 return;

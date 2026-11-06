@@ -925,7 +925,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             user_id: String(userId)
@@ -992,7 +992,7 @@
     // Function to download file
     async function downloadFile(fileId, fileName) {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           alert("Please sign in to download files");
           return;
@@ -1012,7 +1012,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             user_id: String(userId)
@@ -1051,7 +1051,7 @@
     // Function to delete file
     async function deleteFile(fileId, fileName) {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           alert("Please sign in to delete files");
           return;
@@ -1076,7 +1076,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             user_id: String(userId),
@@ -1127,7 +1127,7 @@
       emptyFilesState.style.display = 'none';
       yourFilesSection.style.display = 'none';
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       let userId = null;
 
       if (token) {
@@ -1196,7 +1196,7 @@
     // Function to handle create schedule button click
     function handleCreateSchedule(event) {
       event.preventDefault();
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         alert("Please sign in to create schedules");
@@ -1225,7 +1225,7 @@
         }).join(''));
         const payload = JSON.parse(jsonPayload);
         if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
-          localStorage.removeItem("token"); // expired — sign out automatically
+          sessionStorage.removeItem("token"); // expired — sign out automatically
           return null;
         }
         return payload;
@@ -1236,7 +1236,7 @@
 
     // Authentication handling
     function initializeAuth() {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const authButtons = document.querySelector(".auth-buttons");
       const profileSection = document.querySelector(".profile-section");

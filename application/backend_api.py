@@ -116,6 +116,7 @@ create_teams_table()
 create_members_table()
 create_complaints_table()
 create_file_table()
+create_generations_table()
 
 app = FastAPI()
 ENVIRONMENT = os.getenv("ENVIRONMENT")
@@ -489,6 +490,10 @@ async def schedule_team(data: TeamScheduleData, background_tasks: BackgroundTask
     e.rebalance_min()
 
     excel_file = e.print()
+    try:
+        log_generation(user['user_id'], user['email'], data.team_id)
+    except Exception:
+        pass  # stats only; never block the schedule because of logging
 
     hours_headers = _min_hours_headers(e)
     if data.down == 'down':
@@ -581,7 +586,8 @@ async def admin_data(admin: dict = Depends(get_current_admin)):
     return {
         "total_users": count_users(),
         "users": get_all_users(),
-        "complaints": get_all_complaints()
+        "complaints": get_all_complaints(),
+        **get_admin_stats()
     }
 
 @app.post("/newteam")

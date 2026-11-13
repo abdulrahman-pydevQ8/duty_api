@@ -85,8 +85,19 @@
 
         /* Dashboard */
         .dashboard {
-            max-width: 760px;
+            max-width: 1180px;
             margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+            gap: 20px;
+            margin-bottom: 26px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
 
         .dashboard-header {
@@ -97,15 +108,17 @@
         }
 
         .stats-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 14px;
-            flex-wrap: wrap;
             margin-bottom: 26px;
         }
 
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
         .stat-tile {
-            flex: 1;
-            min-width: 200px;
             background: #14171f;
             border: 1px solid #232838;
             border-radius: 16px;
@@ -180,6 +193,65 @@
             color: #6e768c;
             margin: 0;
         }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        .stats-table th {
+            text-align: left;
+            font-weight: 600;
+            color: #6e768c;
+            padding: 8px 6px;
+            border-bottom: 1px solid #232838;
+        }
+
+        .stats-table td {
+            padding: 10px 6px;
+            border-top: 1px solid #232838;
+            color: #c7ccda;
+            vertical-align: top;
+        }
+
+        .stats-table td.num, .stats-table th.num { text-align: right; }
+
+        .stats-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        .stats-table th.sortable:hover { color: #c7ccda; }
+        .stats-table th.sorted { color: #8fa0ff; }
+        .stats-table th .sort-arrow { font-size: 10px; margin-left: 4px; }
+
+        .user-row { cursor: pointer; }
+        .user-row:hover td { background: #181c26; }
+        .user-row.open td { background: #181c26; }
+
+        .user-row .chevron {
+            display: inline-block;
+            width: 14px;
+            color: #6e768c;
+            font-size: 11px;
+            margin-right: 6px;
+            transition: transform .18s ease;
+        }
+        .user-row.open .chevron { transform: rotate(90deg); }
+
+        .detail-row td { background: #10131b; padding: 10px 6px 14px 26px; }
+
+        .scroll-list { max-height: 520px; overflow-y: auto; }
+
+        .team-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 12.5px;
+            color: #8b93a7;
+        }
+
+        .team-list li { padding: 3px 0; }
+        .team-list .team-name { color: #c7ccda; font-weight: 600; }
+
+        .table-wrap { overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -206,16 +278,49 @@
                 <div class="stat-value" id="totalUsers">–</div>
             </div>
             <div class="stat-tile">
+                <div class="stat-label">Total Teams</div>
+                <div class="stat-value" id="totalTeams">–</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Schedules Generated</div>
+                <div class="stat-value" id="totalGenerations">–</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Saved Files</div>
+                <div class="stat-value" id="totalFiles">–</div>
+            </div>
+            <div class="stat-tile">
                 <div class="stat-label">Messages Received</div>
                 <div class="stat-value" id="totalMessages">–</div>
             </div>
         </div>
 
-        <div class="messages-card" style="margin-bottom: 26px;">
-            <h2 class="messages-title">Users</h2>
-            <div id="usersList">
+        <div class="dashboard-grid">
+        <div class="messages-card">
+            <h2 class="messages-title">Users &amp; activity</h2>
+            <p class="messages-empty" style="margin-bottom: 12px;">Click a user to see their teams.</p>
+            <div class="table-wrap scroll-list">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th class="num sortable" data-key="teams">Teams<span class="sort-arrow"></span></th>
+                            <th class="num sortable" data-key="generations">Generated<span class="sort-arrow"></span></th>
+                            <th class="num sortable" data-key="files">Saved<span class="sort-arrow"></span></th>
+                            <th class="sortable" data-key="last_generation">Last generation<span class="sort-arrow"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="userStatsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="messages-card">
+            <h2 class="messages-title">Recent generations</h2>
+            <div id="recentList" class="scroll-list">
                 <p class="messages-empty">Loading...</p>
             </div>
+        </div>
         </div>
 
         <div class="messages-card">
@@ -233,19 +338,145 @@
             document.getElementById("restrictedCard").style.display = "block";
         }
 
-        function renderUsers(users) {
-            const list = document.getElementById("usersList");
-            list.innerHTML = "";
+        let userStatsData = [];
+        let teamsData = [];
+        let sortKey = "generations";
+        let sortDesc = true;
+
+        function sortedUsers() {
+            return [...userStatsData].sort((a, b) => {
+                const av = a[sortKey] ?? "";
+                const bv = b[sortKey] ?? "";
+                if (av === bv) return 0;
+                const cmp = av > bv ? 1 : -1;
+                return sortDesc ? -cmp : cmp;
+            });
+        }
+
+        function updateSortHeaders() {
+            document.querySelectorAll(".stats-table th.sortable").forEach(th => {
+                const active = th.dataset.key === sortKey;
+                th.classList.toggle("sorted", active);
+                th.querySelector(".sort-arrow").textContent = active ? (sortDesc ? "▼" : "▲") : "";
+            });
+        }
+
+        function setupSorting() {
+            document.querySelectorAll(".stats-table th.sortable").forEach(th => {
+                th.addEventListener("click", () => {
+                    if (sortKey === th.dataset.key) {
+                        sortDesc = !sortDesc;
+                    } else {
+                        sortKey = th.dataset.key;
+                        sortDesc = true;
+                    }
+                    renderUserStats(userStatsData, teamsData);
+                });
+            });
+        }
+
+        function renderUserStats(users, teams) {
+            userStatsData = users;
+            teamsData = teams;
+            users = sortedUsers();
+            updateSortHeaders();
+            const body = document.getElementById("userStatsBody");
+            body.innerHTML = "";
 
             if (!users.length) {
-                const empty = document.createElement("p");
-                empty.className = "messages-empty";
-                empty.textContent = "No users yet.";
-                list.appendChild(empty);
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 5;
+                cell.className = "messages-empty";
+                cell.textContent = "No users yet.";
+                row.appendChild(cell);
+                body.appendChild(row);
                 return;
             }
 
             users.forEach(u => {
+                const row = document.createElement("tr");
+                row.className = "user-row";
+
+                const userCell = document.createElement("td");
+                const email = document.createElement("div");
+                email.className = "message-email";
+                const chevron = document.createElement("span");
+                chevron.className = "chevron";
+                chevron.textContent = "▶";
+                email.appendChild(chevron);
+                email.appendChild(document.createTextNode(u.email || "unknown"));
+                const name = document.createElement("div");
+                name.className = "message-date";
+                name.textContent = u.name || "";
+                userCell.appendChild(email);
+                userCell.appendChild(name);
+                row.appendChild(userCell);
+
+                [u.teams, u.generations, u.files].forEach(n => {
+                    const cell = document.createElement("td");
+                    cell.className = "num";
+                    cell.textContent = n;
+                    row.appendChild(cell);
+                });
+
+                const lastCell = document.createElement("td");
+                lastCell.className = "message-date";
+                lastCell.textContent = u.last_generation ? u.last_generation.slice(0, 16) : "–";
+                row.appendChild(lastCell);
+
+                const detail = document.createElement("tr");
+                detail.className = "detail-row";
+                detail.style.display = "none";
+                const detailCell = document.createElement("td");
+                detailCell.colSpan = 5;
+                const list = document.createElement("ul");
+                list.className = "team-list";
+                const userTeams = teams.filter(t => t.owner_id === u.user_id);
+                if (!userTeams.length) {
+                    const li = document.createElement("li");
+                    li.textContent = "No teams.";
+                    list.appendChild(li);
+                }
+                userTeams.forEach(t => {
+                    const li = document.createElement("li");
+                    const tn = document.createElement("span");
+                    tn.className = "team-name";
+                    tn.textContent = t.team_name;
+                    li.appendChild(tn);
+                    li.appendChild(document.createTextNode(
+                        ` · ${t.members} members · ${t.generations} generations`
+                        + (t.created_at ? ` · created ${t.created_at.slice(0, 10)}` : "")
+                    ));
+                    list.appendChild(li);
+                });
+                detailCell.appendChild(list);
+                detail.appendChild(detailCell);
+
+                row.addEventListener("click", () => {
+                    const opening = detail.style.display === "none";
+                    detail.style.display = opening ? "" : "none";
+                    row.classList.toggle("open", opening);
+                });
+
+                body.appendChild(row);
+                body.appendChild(detail);
+            });
+        }
+
+        function renderRecent(generations) {
+            const list = document.getElementById("recentList");
+            list.innerHTML = "";
+
+            if (!generations.length) {
+                const empty = document.createElement("p");
+                empty.className = "messages-empty";
+                empty.textContent = "No generations yet.";
+                list.appendChild(empty);
+                return;
+            }
+
+            generations.forEach(g => {
                 const item = document.createElement("div");
                 item.className = "message-item";
 
@@ -254,16 +485,21 @@
 
                 const email = document.createElement("span");
                 email.className = "message-email";
-                email.textContent = u.email || "unknown";
+                email.textContent = g.user_email || "unknown";
 
-                const name = document.createElement("span");
-                name.className = "message-date";
-                name.textContent = u.name || "";
+                const date = document.createElement("span");
+                date.className = "message-date";
+                date.textContent = g.created_at ? g.created_at.slice(0, 16) : "";
 
                 meta.appendChild(email);
-                meta.appendChild(name);
+                meta.appendChild(date);
+
+                const text = document.createElement("p");
+                text.className = "message-text";
+                text.textContent = g.team_name ? `Team: ${g.team_name}` : "Team deleted";
 
                 item.appendChild(meta);
+                item.appendChild(text);
                 list.appendChild(item);
             });
         }
@@ -328,7 +564,11 @@
                 const data = await response.json();
                 document.getElementById("totalUsers").textContent = data.total_users;
                 document.getElementById("totalMessages").textContent = data.complaints.length;
-                renderUsers(data.users || []);
+                document.getElementById("totalTeams").textContent = data.total_teams;
+                document.getElementById("totalGenerations").textContent = data.total_generations;
+                document.getElementById("totalFiles").textContent = data.total_files;
+                renderUserStats(data.user_stats || [], data.teams || []);
+                renderRecent(data.recent_generations || []);
                 renderMessages(data.complaints);
 
                 document.getElementById("restrictedWrap").style.display = "none";
@@ -338,7 +578,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadAdminData);
+        document.addEventListener('DOMContentLoaded', () => {
+            setupSorting();
+            loadAdminData();
+        });
     </script>
 </body>
 </html>

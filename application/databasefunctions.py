@@ -78,6 +78,7 @@ def create_teams_table():
                 owner_id INTEGER
             );
         """)
+        cursor.execute("ALTER TABLE teams ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();")
         conn.commit()
         cursor.close()
     finally:
@@ -323,6 +324,116 @@ def get_all_complaints():
             }
             for row in results
         ]
+    finally:
+        db_pool.putconn(conn)
+
+
+def create_generations_table():
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS generations (
+                generation_id SERIAL PRIMARY KEY,
+                user_id INTEGER,
+                user_email TEXT,
+                team_id INTEGER,
+                team_name TEXT,
+                created_at TIMESTAMP
+            );
+        """)
+        conn.commit()
+        cursor.close()
+    finally:
+        db_pool.putconn(conn)
+
+
+def log_generation(user_id, user_email, team_id):
+    # team_name is copied in so the history survives the team being deleted
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO generations (user_id, user_email, team_id, team_name, created_at)
+            SELECT %s, %s, %s, team_name, %s FROM teams WHERE team_id = %s;
+        """, (user_id, user_email, team_id, datetime.now(timezone.utc), team_id))
+        conn.commit()
+        cursor.close()
+    finally:
+        db_pool.putconn(conn)
+
+
+def get_admin_stats():
+    conn = db_pool.getconn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM teams;")
+        total_teams = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM generations;")
+        total_generations = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM filess;")
+        total_files = cursor.fetchone()[0]
+
+        cursor.execute("""
+            SELECT u.id, u.name, u.email,
+                   (SELECT COUNT(*) FROM teams t WHERE t.owner_id = u.id),
+                   (SELECT COUNT(*) FROM generations g WHERE g.user_id = u.id),
+                   (SELECT COUNT(*) FROM filess f WHERE f.user_id = u.id),
+                   (SELECT MAX(created_at) FROM generations g WHERE g.user_id = u.id)
+            FROM users u ORDER BY u.id;
+        """)
+        users = [
+            {
+                "user_id": row[0],
+                "name": row[1],
+                "email": row[2],
+                "teams": row[3],
+                "generations": row[4],
+                "files": row[5],
+                "last_generation": str(row[6]) if row[6] else None,
+            }
+            for row in cursor.fetchall()
+        ]
+
+        cursor.execute("""
+            SELECT t.team_id, t.team_name, t.owner_id, t.created_at,
+                   (SELECT COUNT(*) FROM members m WHERE m.team_id = t.team_id),
+                   (SELECT COUNT(*) FROM generations g WHERE g.team_id = t.team_id)
+            FROM teams t ORDER BY t.team_id;
+        """)
+        teams = [
+            {
+                "team_id": row[0],
+                "team_name": row[1],
+                "owner_id": row[2],
+                "created_at": str(row[3]) if row[3] else None,
+                "members": row[4],
+                "generations": row[5],
+            }
+            for row in cursor.fetchall()
+        ]
+
+        cursor.execute("""
+            SELECT user_email, team_name, created_at FROM generations
+            ORDER BY generation_id DESC LIMIT 50;
+        """)
+        recent = [
+            {
+                "user_email": row[0],
+                "team_name": row[1],
+                "created_at": str(row[2]) if row[2] else None,
+            }
+            for row in cursor.fetchall()
+        ]
+        cursor.close()
+        return {
+            "total_teams": total_teams,
+            "total_generations": total_generations,
+            "total_files": total_files,
+            "user_stats": users,
+            "teams": teams,
+            "recent_generations": recent,
+        }
     finally:
         db_pool.putconn(conn)
 

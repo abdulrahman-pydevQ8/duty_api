@@ -30,6 +30,15 @@ class Eframe:
         self.hours_specified = hours_specified  # False = user never set hours; last column shows shift counts
         self.hours_used = {n: 0 for n in name_list}
         self._we_set = {str(w) for w in self.week_end}
+        # consecutive weekend/holiday days form one "weekend"; nobody should work
+        # two weekends in a row, so each day knows which weekend it belongs to
+        self._wk_groups = []
+        for d in sorted({int(w) for w in self.week_end}):
+            if self._wk_groups and self._wk_groups[-1][-1] == d - 1:
+                self._wk_groups[-1].append(d)
+            else:
+                self._wk_groups.append([d])
+        self._wk_group_of = {str(d): gi for gi, g in enumerate(self._wk_groups) for d in g}
         global selection_counts
         shuffled = self.names.copy()
         random.shuffle(shuffled)
@@ -47,12 +56,28 @@ class Eframe:
             return True
         return self.hours_used[name] + self._shift_hours(shift_idx, day) <= self.max_month_hours
 
+    def _weekend_conflict(self, p, day):
+        # True if p already works any shift on the weekend before or after this
+        # weekend day; weekdays never conflict
+        gi = self._wk_group_of.get(str(day))
+        if gi is None:
+            return False
+        for g in (gi - 1, gi + 1):
+            if 0 <= g < len(self._wk_groups):
+                for d in self._wk_groups[g]:
+                    d = str(d)
+                    if p in self.N_dic[d] or p in self.PM_dic[d] or p in self.WK_dic[d]:
+                        return True
+        return False
+
     def _can_take(self, p, shift_idx, day):
         # Whether p can legally take this shift: honors vacations, the max cap,
         # one shift per day, and the same adjacency rules the passes enforce.
         if str(day) in self.vacation[p] or not self._hours_ok(p, shift_idx, day):
             return False
         if p in self.N_dic[day] or p in self.PM_dic[day] or p in self.WK_dic[day]:
+            return False
+        if self._weekend_conflict(p, day):
             return False
         i = self.main_keys.index(day)
         prev_d = self.main_keys[i - 1] if i > 0 else None
@@ -154,12 +179,14 @@ class Eframe:
             k = 0  # Counter to ensure four unique names are added per key
             nt = 0  # while loop counter
             broke = False
+            strict = True  # weekend rule on; dropped for this day only if nobody qualifies
 
             while k < self.shift_limit[0]:
                 nt += 1
                 if nt > len(self.names):
                     broke = True
                     break
+                found = False
 
                 # Sort names by the number of times they've been assigned, ascending
                 sorted_names = self._sorted_candidates(self.N_dic[self.main_keys[i]])
@@ -176,13 +203,17 @@ class Eframe:
                         pass
                     elif self._hours_ok(name, 0, self.main_keys[i]) and name not in self.N_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i - 1]] \
                             and name not in self.WK_dic[self.main_keys[i]] \
-                            and (i + 1 >= len(self.main_keys) or name not in self.WK_dic[self.main_keys[i + 1]]):
+                            and (i + 1 >= len(self.main_keys) or name not in self.WK_dic[self.main_keys[i + 1]]) \
+                            and (not strict or not self._weekend_conflict(name, self.main_keys[i])):
                         if self.data.include_shift[0] == 1:
                             self.N_dic[self.main_keys[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
                             self.hours_used[name] += self._shift_hours(0, self.main_keys[i])
                         k += 1  # Increment unique count for this key
+                        found = True
                         break  # Exit inner loop to move to the next unique position
+                if not found and strict:
+                    strict = False  # too few people free this weekend; fall back to the normal rules
             if broke:
                 break
         N_names_list = self.names.copy()
@@ -217,12 +248,14 @@ class Eframe:
             k = 0  # Counter to ensure four unique names are added per key
             PM_c = 0  # while loop counter
             brokePM = False
+            strict = True  # weekend rule on; dropped for this day only if nobody qualifies
 
             while k < self.shift_limit[1]:
                 if PM_c > len(self.main_keys):
                     brokePM = True
                     break
                 PM_c += 1
+                found = False
 
                 # Sort names by the number of times they've been assigned, ascending
                 sorted_names = self._sorted_candidates(self.PM_dic[self.main_keys[i]])
@@ -239,13 +272,17 @@ class Eframe:
                         pass
                     elif self._hours_ok(name, 1, self.main_keys[i]) and name not in self.PM_dic[self.main_keys[i]] and name not in self.N_dic[self.main_keys[i]] \
                             and name not in self.N_dic[self.main_keys[i - 1]] \
-                            and name not in self.WK_dic[self.main_keys[i]]:
+                            and name not in self.WK_dic[self.main_keys[i]] \
+                            and (not strict or not self._weekend_conflict(name, self.main_keys[i])):
                         if self.data.include_shift[1] == 1:
                             self.PM_dic[self.main_keys[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
                             self.hours_used[name] += self._shift_hours(1, self.main_keys[i])
                         k += 1  # Increment unique count for this key
+                        found = True
                         break  # Exit inner loop to move to the next unique position
+                if not found and strict:
+                    strict = False  # too few people free this weekend; fall back to the normal rules
 
             if brokePM:
                 break
@@ -279,11 +316,13 @@ class Eframe:
             k = 0
             WK_c = 0  # while loop counter
             brokeWK = False
+            strict = True  # weekend rule on; dropped for this day only if nobody qualifies
             while k < self.shift_limit[2]:
                 if WK_c >> len(self.names):
                     brokeWK = True
                     break
                 WK_c += 1
+                found = False
 
                 sorted_names = self._sorted_candidates(self.WK_dic[self.week_end[i]])
 
@@ -299,13 +338,17 @@ class Eframe:
                     elif self._hours_ok(name, 2, self.week_end[i]) and name not in self.PM_dic[self.week_end[i]] \
                             and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 2]] \
                             and name not in self.WK_dic[self.week_end[i]] \
-                            and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 1]]:
+                            and name not in self.N_dic[self.main_keys[int(self.week_end[i]) - 1]] \
+                            and (not strict or not self._weekend_conflict(name, self.week_end[i])):
                         if self.data.include_shift[2] == 1:
                             self.WK_dic[self.week_end[i]].append(name)  # Add to AM_dic
                             selection_counts[name] += 1  # Increment the count for this name
                             self.hours_used[name] += self._shift_hours(2, self.week_end[i])
                         k += 1  # Increment unique count for this key
+                        found = True
                         break  # Exit inner loop to move to the next unique position
+                if not found and strict:
+                    strict = False  # too few people free this weekend; fall back to the normal rules
             if brokeWK:
                 break
         WK_names_list = self.names.copy()
